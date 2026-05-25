@@ -193,7 +193,7 @@ st.markdown("""
 # ==============================================================================
 # Tautan langsung yang Anda berikan untuk pemuatan instan
 direct_logo_url = "https://drive.google.com/uc?export=view&id=1V3x3dfHlsHP-LLbkxVGt4Z9NmfdoR8XH"
-st.image(direct_logo_url, width=150)
+st.image(direct_logo_url, width=100)
 
 st.title("📊 Sistem Pendukung Keputusan: Perencanaan Agregat Interaktif (12 Periode)")
 st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan *Robust Planning* berbasis skenario.")
