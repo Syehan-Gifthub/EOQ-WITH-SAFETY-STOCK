@@ -183,18 +183,10 @@ default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 16
 # Inisialisasi State Multi-Kolom agar Sinkron secara Menyeluruh
 if "base_demand" not in st.session_state:
     st.session_state.base_demand = default_demand.copy()
-if "base_workforce" not in st.session_state:
-    st.session_state.base_workforce = [20] * num_periods
-if "base_capacity" not in st.session_state:
-    st.session_state.base_capacity = [70] * num_periods
-if "base_init_inv" not in st.session_state:
-    st.session_state.base_init_inv = [200] + [0] * (num_periods - 1)  # Hanya baris pertama yang menjadi acuan awal
-if "base_safety" not in st.session_state:
-    st.session_state.base_safety = [100] * num_periods
 if "editor_trigger" not in st.session_state:
     st.session_state.editor_trigger = 0
 
-# PEMBAHARUAN BANNER: Menambahkan Keterangan Semua Parameter Sesuai Permintaan
+# BANNER KETERANGAN: Tetap dipertahankan lengkap sesuai riwayat sebelumnya
 st.markdown("""
 <div class="upload-box">
     <h4>📅 Integrasi Data Massal via Excel Template (Multi-Parameter)</h4>
@@ -233,10 +225,10 @@ st.markdown("""
 template_df = pd.DataFrame({
     "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
     "Demand": st.session_state.base_demand,
-    "Tenaga Kerja": st.session_state.base_workforce,
-    "Kapasitas Pekerja": st.session_state.base_capacity,
-    "Inventory Awal": st.session_state.base_init_inv,
-    "Safety Stock": st.session_state.base_safety
+    "Tenaga Kerja": [20] * num_periods,
+    "Kapasitas Pekerja": [70] * num_periods,
+    "Inventory Awal": [200] + [0] * (num_periods - 1),
+    "Safety Stock": [100] * num_periods
 })
 
 template_io = io.BytesIO()
@@ -267,22 +259,9 @@ if uploaded_file is not None:
         excel_data = pd.read_excel(uploaded_file)
         if "Periode" in excel_data.columns and "Demand" in excel_data.columns:
             parsed_df = excel_data.head(num_periods).copy()
-            
-            # Parsing Demand
             st.session_state.base_demand = pd.to_numeric(parsed_df["Demand"], errors='coerce').fillna(0).astype(int).tolist()
-            
-            # Parsing parameter tambahan jika tersedia di file Excel
-            if "Tenaga Kerja" in parsed_df.columns:
-                st.session_state.base_workforce = pd.to_numeric(parsed_df["Tenaga Kerja"], errors='coerce').fillna(20).astype(int).tolist()
-            if "Kapasitas Pekerja" in parsed_df.columns:
-                st.session_state.base_capacity = pd.to_numeric(parsed_df["Kapasitas Pekerja"], errors='coerce').fillna(70).astype(int).tolist()
-            if "Inventory Awal" in parsed_df.columns:
-                st.session_state.base_init_inv = pd.to_numeric(parsed_df["Inventory Awal"], errors='coerce').fillna(0).astype(int).tolist()
-            if "Safety Stock" in parsed_df.columns:
-                st.session_state.base_safety = pd.to_numeric(parsed_df["Safety Stock"], errors='coerce').fillna(100).astype(int).tolist()
-                
             st.session_state.editor_trigger += 1  # Re-render widget data editor
-            st.success("✅ File Excel Multi-Parameter Berhasil Diverifikasi! Seluruh komponen diselaraskan.")
+            st.success("✅ File Excel Berhasil Diverifikasi! Seluruh komponen diselaraskan.")
         else:
             st.error("❌ Format Kepala Tabel Salah! Pastikan minimal mengandung kolom 'Periode' dan 'Demand'.")
     except Exception as e:
@@ -291,18 +270,14 @@ if uploaded_file is not None:
 st.markdown("---")
 
 # ==============================================================================
-# 2. SIDEBAR - PEMBAHARUAN MASTER DATA EDITOR & ELEMEN INPUT OPERASIONAL
+# 2. SIDEBAR - DATA EDITOR RINGKAS & KONTROL INPUT LINKED OTOMATIS
 # ==============================================================================
 st.sidebar.header("🛠️ Parameter Operasional")
 
-# Penyusunan Dataframe input di sidebar yang mencakup seluruh parameter sesuai request
+# Penyederhanaan: Tabel input sidebar dikembalikan hanya untuk Periode & Demand saja
 sidebar_input_df = pd.DataFrame({
     "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
-    "Demand": st.session_state.base_demand,
-    "Tenaga Kerja": st.session_state.base_workforce,
-    "Kapasitas Pekerja": st.session_state.base_capacity,
-    "Inventory Awal": st.session_state.base_init_inv,
-    "Safety Stock": st.session_state.base_safety
+    "Demand": st.session_state.base_demand
 })
 
 master_editor_df = st.sidebar.data_editor(
@@ -311,19 +286,21 @@ master_editor_df = st.sidebar.data_editor(
     key=f"master_editor_{st.session_state.editor_trigger}"
 )
 
-# Ambil data dinamis hasil perubahan user dari tabel editor
+# Mengambil data dinamis demand hasil modifikasi user
 base_demand = master_editor_df["Demand"].tolist()
-workforce_list = master_editor_df["Tenaga Kerja"].tolist()
-capacity_list = master_editor_df["Kapasitas Pekerja"].tolist()
-inventory_initial_list = master_editor_df["Inventory Awal"].tolist()
-safety_stock_list = master_editor_df["Safety Stock"].tolist()
 
-# Elemen Kontrol Esensial (Dipertahankan Penuh sesuai permintaan agar tidak ada yang dikurangin)
-st.sidebar.subheader("Kapasitas & Tenaga Kerja (Default)")
-init_workforce = st.sidebar.number_input("Tenaga Kerja Awal (Pekerja)", value=int(workforce_list[0]), min_value=0)
-worker_cap = st.sidebar.number_input("Kapasitas per Tenaga Kerja (Unit/Bulan)", value=int(capacity_list[0]), min_value=1)
-init_inv = st.sidebar.number_input("Inventori Awal (Unit)", value=int(inventory_initial_list[0]), min_value=0)
-safety_stock = st.sidebar.number_input("Safety Stock (Unit)", value=int(safety_stock_list[0]), min_value=0)
+# Elemen Kontrol Esensial Sidebar Bawah - Otomatis Menghubungkan (Linked) ke Master Perhitungan
+st.sidebar.subheader("Kapasitas & Tenaga Kerja")
+init_workforce = st.sidebar.number_input("Tenaga Kerja Awal (Pekerja)", value=20, min_value=0)
+worker_cap = st.sidebar.number_input("Kapasitas per Tenaga Kerja (Unit/Bulan)", value=70, min_value=1)
+init_inv = st.sidebar.number_input("Inventori Awal (Unit)", value=200, min_value=0)
+safety_stock = st.sidebar.number_input("Safety Stock (Unit)", value=100, min_value=0)
+
+# Pembuatan list otomatis 12 Periode berbasis widget agar langsung sinkron (Auto-Update)
+workforce_list = [init_workforce] * num_periods
+capacity_list = [worker_cap] * num_periods
+inventory_initial_list = [init_inv] + [0] * (num_periods - 1)
+safety_stock_list = [safety_stock] * num_periods
 
 st.sidebar.subheader("Batasan Kapasitas Tambahan")
 max_ot_cap = st.sidebar.number_input("Batas Maksimum Overtime (Unit/Bulan)", value=300, min_value=0)
@@ -355,7 +332,7 @@ if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. PENYESUAIAN MESIN PERHITUNGAN STRATEGI DINAMIS MULTI-PARAMETER
+# 3. MESIN PERHITUNGAN STRATEGI DINAMIS MULTI-PARAMETER (100% UTUH)
 # ==============================================================================
 def calculate_aggregate_planning(strategy, base_demand_list, demand_list, wf_inp, cap_inp, sf_inp, initial_inventory_val):
     inv_prev = initial_inventory_val
@@ -365,7 +342,6 @@ def calculate_aggregate_planning(strategy, base_demand_list, demand_list, wf_inp
     
     if strategy == "Level":
         total_demand = sum(demand_list)
-        # Kalkulasi level konstan menggunakan rata-rata kapasitas dari tabel dinamis
         avg_cap = np.mean(cap_inp) if np.mean(cap_inp) > 0 else 1
         total_production_needed = max(0, total_demand + sf_inp[-1] - initial_inventory_val)
         avg_production_needed = total_production_needed / num_periods
@@ -393,7 +369,7 @@ def calculate_aggregate_planning(strategy, base_demand_list, demand_list, wf_inp
             firing = max(0, wf_prev - wf_current) if t == 0 else 0
             rt_prod = wf_current * c_cap
         elif strategy == "Mixed":
-            wf_current = wf_inp[t]  # Membaca kapasitas & tenaga kerja langsung sesuai baris bulan berjalan
+            wf_current = wf_inp[t]
             hiring = max(0, wf_current - wf_prev)
             firing = max(0, wf_prev - wf_current)
             rt_prod = wf_current * c_cap
@@ -497,7 +473,6 @@ for strat in ["Chase", "Level", "Mixed"]:
     service_level = max(0.0, ((total_demand - total_shortage) / total_demand) * 100) if total_demand > 0 else 100
     
     actual_production = df_active["RT Production"].sum() + df_active["OT Production"].sum()
-    # Menggunakan kapasitas dinamis per periode
     max_capacity = (df_active["Workforce"] * capacity_list).sum() + (max_ot_cap * num_periods)
     capacity_util = (actual_production / max_capacity) * 100 if max_capacity > 0 else 0
     wf_total_cap = (df_active["Workforce"] * capacity_list).sum()
@@ -593,24 +568,28 @@ with tab1:
     """, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# TAB 2: DETAILED STRATEGY DEEP-DIVE
+# TAB 2: DETAILED STRATEGY DEEP-DIVE (INDEKS STRUKTUR TABEL DIMULAI DARI 1)
 # ------------------------------------------------------------------------------
 with tab2:
     selected_strategy = st.radio("Pilih Strategi untuk Analisis Mendalam:", ["Chase", "Level", "Mixed"], horizontal=True)
     df_selected = results[selected_strategy][selected_scenario]
     
     st.subheader(f"📋 Master Table Aggregate Production Planning: {selected_strategy} ({selected_scenario})")
-    master_display = df_selected[["Periode", "Base Demand", "Demand", "Net Demand", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]]
+    master_display = df_selected[["Periode", "Base Demand", "Demand", "Net Demand", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]].copy()
+    master_display.index = range(1, len(master_display) + 1) # Penyesuaian Indeks Baris Mulai dari 1
     st.dataframe(master_display.style.format(precision=0), use_container_width=True)
     
     if selected_strategy == "Chase":
         st.subheader("👨‍🏭 Workforce & Capacity Adjustment Sheet (Chase Focus)")
-        st.dataframe(df_selected[["Periode", "Workforce", "Hiring", "Firing", "RT Production"]].style.format(precision=0), use_container_width=True)
+        chase_display = df_selected[["Periode", "Workforce", "Hiring", "Firing", "RT Production"]].copy()
+        chase_display.index = range(1, len(chase_display) + 1) # Penyesuaian Indeks Baris Mulai dari 1
+        st.dataframe(chase_display.style.format(precision=0), use_container_width=True)
         
     elif selected_strategy == "Level":
         st.subheader("📦 Inventory Buffer & Capacity Efficiency Sheet (Level Focus)")
         df_level_spec = df_selected[["Periode", "Inventory", "Stockout", "RT Production"]].copy()
         df_level_spec["Capacity Efficiency (%)"] = np.where((df_selected["Workforce"] * capacity_list) > 0, (df_level_spec["RT Production"] / (df_selected["Workforce"] * capacity_list)) * 100, 0)
+        df_level_spec.index = range(1, len(df_level_spec) + 1) # Penyesuaian Indeks Baris Mulai dari 1
         st.dataframe(df_level_spec.style.format(precision=1), use_container_width=True)
         
     elif selected_strategy == "Mixed":
@@ -618,6 +597,7 @@ with tab2:
         mob_df = df_selected[["Periode", "RT Production", "OT Production", "Subcontracting"]].copy()
         total_p = mob_df["RT Production"] + mob_df["OT Production"] + mob_df["Subcontracting"]
         mob_df["Internal Content (%)"] = np.where(total_p > 0, ((mob_df["RT Production"] + mob_df["OT Production"]) / total_p) * 100, 0)
+        mob_df.index = range(1, len(mob_df) + 1) # Penyesuaian Indeks Baris Mulai dari 1
         st.dataframe(mob_df.style.format(precision=1), use_container_width=True)
         
         st.subheader("🪵 Raw Material Requirements Planning (BOM Explode Proxy)")
@@ -628,11 +608,14 @@ with tab2:
             "Ending Inventory Material": np.maximum(0, 100 + ((df_selected["RT Production"] + df_selected["OT Production"]) * 0.05)),
             "Material Shortage": 0
         })
+        raw_mat_df.index = range(1, len(raw_mat_df) + 1) # Penyesuaian Indeks Baris Mulai dari 1
         st.dataframe(raw_mat_df.style.format(precision=0), use_container_width=True)
 
     st.subheader("💸 Analisis Finansial & Struktur Biaya Berjalan")
     cost_cols = ["Periode", "Material Cost", "Production Cost", "Labor Cost", "Hiring Cost", "Firing Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost", "Total Cost"]
-    st.dataframe(df_selected[cost_cols].style.format(precision=0), use_container_width=True)
+    cost_display = df_selected[cost_cols].copy()
+    cost_display.index = range(1, len(cost_display) + 1) # Penyesuaian Indeks Baris Mulai dari 1
+    st.dataframe(cost_display.style.format(precision=0), use_container_width=True)
     
     st.markdown("### 📊 Visualisasi Performa Berkala (12 Periode)")
     v1, v2 = st.columns(2)
@@ -686,6 +669,7 @@ with tab3:
         })
         
     robust_df = pd.DataFrame(robust_records)
+    robust_df.index = range(1, len(robust_df) + 1) # Penyesuaian Indeks Baris Mulai dari 1
     st.dataframe(robust_df.style.format({
         "Skenario Pesimis (Cost)": "IDR {:,.0f}",
         "Skenario Normal (Cost)": "IDR {:,.0f}",
