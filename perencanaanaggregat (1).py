@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # ==============================================================================
-# 1. KONFIGURASI HALAMAN & INJEKSI CSS TOTAL LIGHT MODE (PUTIH, PINK PASTEL, TEKS HITAM)
+# 1. KONFIGURASI HALAMAN & FORCE MUTLAK LIGHT SYSTEM VARIABEL (PUTIH & PINK)
 # ==============================================================================
 st.set_page_config(
     page_title="Interactive Aggregate Planning Dashboard",
@@ -13,46 +13,66 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# INJEKSI CSS GLOBAL UNTUK MEMAKSA LIGHT MODE SECARA ABSOLUT
+# Menyuntikkan CSS variabel global untuk memaksa emulasi light mode di internal mesin Streamlit
 st.markdown("""
 <style>
-    /* 1. Memaksa Background Aplikasi, Main Container, dan Header Menjadi Putih Bersih */
+    /* Mengubah paksa variabel warna internal Streamlit di level root */
+    :root {
+        --text-color: #000000 !important;
+        --background-color: #ffffff !important;
+        --secondary-background-color: #fdf6f6 !important;
+    }
+
+    /* 1. Memaksa Background Aplikasi Utama & Area Header Menjadi Putih Bersih */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMainBlockContainer"] {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
     
-    /* 2. Memaksa Sidebar Menjadi Putih Bersih dengan Batas Pink Muda */
+    /* 2. Memaksa Sidebar Samping Menjadi Putih Bersih Bersih dengan Garis Pink */
     [data-testid="stSidebar"], [data-testid="stSidebarUserContent"], [data-testid="stSidebarNav"] {
         background-color: #ffffff !important;
         border-right: 2px solid #ffe4e1 !important;
     }
 
-    /* 3. Memaksa Semua Elemen Teks Standard Menjadi Hitam Pekat */
+    /* 3. Memaksa Seluruh Teks Standar Dashboard Menjadi Hitam Pekat */
     h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, p, li {
         color: #000000 !important;
     }
     
-    /* Penegasan teks pada area sidebar samping */
+    /* Memastikan teks parameter di sidebar hitam dan tebal */
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4 {
         color: #111111 !important;
         font-weight: 600 !important;
     }
 
-    /* 4. Perbaikan Elemen Box Input & Dropdown di Sidebar Jauh Lebih Terang & Teks Hitam */
-    div[data-baseweb="input"], div[data-baseweb="select"], .stNumberInput input, .stSelectbox div, div[role="combobox"] {
-        background-color: #fdf6f6 !important;
+    /* 4. Memaksa Seluruh Dropdown Skenario & Selectbox Menjadi Putih (Bukan Hitam) */
+    div[data-baseweb="select"], div[role="combobox"], .stSelectbox div {
+        background-color: #ffffff !important;
         color: #000000 !important;
         border: 1px solid #ffb6c1 !important;
     }
     
-    /* Tombol increment/decrement angka di sidebar */
+    /* Memaksa list pilihan dropdown yang mencuat keluar tetap berlatar putih & teks hitam */
+    ul[role="listbox"], li[role="option"] {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    /* Input angka di sidebar */
+    div[data-baseweb="input"], .stNumberInput input {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        border-color: #ffb6c1 !important;
+    }
+    
+    /* Tombol naik/turun angka di sidebar */
     button[title="Increment"], button[title="Decrement"] {
         color: #000000 !important;
         background-color: #ffe4e1 !important;
     }
 
-    /* 5. Mengubah Garis Pembatas Horisontal Menjadi Pink Pastel */
+    /* 5. Mengubah Garis Pembatas Horisontal Menjadi Warna Pink Cerah */
     hr {
         border: 0 !important;
         height: 2px !important;
@@ -60,7 +80,7 @@ st.markdown("""
         margin: 20px 0 !important;
     }
 
-    /* 6. Desain Navigasi Tab (Tab Aktif Berwarna Pink Tua, Garis Bawah Pink Muda) */
+    /* 6. Desain Navigasi Tab (Tab Aktif Berwarna Pink Tua, Garis Bawah Pink) */
     button[data-baseweb="tab"] {
         color: #444444 !important;
         font-weight: 500 !important;
@@ -71,14 +91,13 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* 7. Pengondisian Container Tabel (DataFrame & DataEditor) Agar Latar Belakangnya Putih */
-    [data-testid="stDataEditor"], .stDataFrame, div[data-testid="stTable"] {
+    /* 7. Memaksa Frame Luar Penampung Tabel Menjadi Putih Total */
+    [data-testid="stDataEditor"], .stDataFrame, div[data-testid="stTable"], .glideDataGrid {
         background-color: #ffffff !important;
         color: #000000 !important;
-        border: 1px solid #ffe4e1 !important;
     }
 
-    /* 8. Desain Kartu Eksekutif (KPI Card) */
+    /* 8. Desain Kartu KPI */
     .kpi-card {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -109,7 +128,7 @@ st.markdown("""
         margin-top: 2px !important;
     }
     
-    /* 9. Desain Kotak Rekomendasi Bisnis */
+    /* 9. Desain Kotak Rekomendasi Jauh Lebih Terang */
     .recommendation-box {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -135,27 +154,26 @@ st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan 
 st.markdown("---")
 
 
-# FUNGSI ADVANCED STYLING UNTUK MEMAKSA KEPALA TABEL PINK DAN TEKS HITAM KERENG
+# FUNGSI INTERVENSI INTERNALS TABEL AGAR BERLATAR PUTIH, TEKS HITAM PEKAT & KEPALA PINK PASTEL
 def style_table_light(df, precision_val=0):
     return df.style.set_properties(**{
-        'background-color': '#ffffff',      # Isi sel putih bersih
-        'color': '#000000',                 # Teks isi tabel hitam pekat/kereng
-        'border-color': '#ffe4e1',          # Garis pembatas sel pink sangat muda
-        'font-weight': '500'
+        'background-color': '#ffffff',      # Isi sel dipaksa putih
+        'color': '#000000',                 # Teks isi dipaksa hitam pekat
+        'border-color': '#ffe4e1'           # Pembatas garis sel pink muda
     }).set_table_styles([
         {
-            'selector': 'th',               # Target khusus Kepala Tabel (Headers)
+            'selector': 'th',               # Merubah Kepala Tabel (Header)
             'props': [
-                ('background-color', '#ffccd5'), # Kepala tabel berwarna pink pastel cerah
-                ('color', '#000000'),            # Teks kepala tabel hitam pekat
-                ('font-weight', 'bold'),         # Teks tebal
-                ('border-color', '#ffb6c1')      # Garis pembatas kepala tabel pink
+                ('background-color', '#ffccd5'), # Kepala tabel menjadi pink muda cerah
+                ('color', '#000000'),            # Teks kepala tabel hitam
+                ('font-weight', 'bold'),
+                ('border-color', '#ffb6c1')
             ]
         },
         {
-            'selector': 'index',             # Kolom indeks paling kiri jika ada
+            'selector': 'td',               # Menegaskan isi data tabel
             'props': [
-                ('background-color', '#fdf6f6'),
+                ('background-color', '#ffffff'),
                 ('color', '#000000')
             ]
         }
@@ -173,9 +191,9 @@ st.sidebar.subheader("Permintaan (Demand) per Periode")
 default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
 demand_init_df = pd.DataFrame({"Periode": [f"Bulan {i+1}" for i in range(num_periods)], "Demand": default_demand})
 
-# Melemparkan data editor dengan paksaan visual light mode
+# Memaksa warna tabel editor di samping menggunakan engine style pandas light
 demand_df = st.sidebar.data_editor(
-    demand_init_df,
+    demand_init_df.style.set_properties(**{'background-color': '#ffffff', 'color': '#000000'}),
     hide_index=True
 )
 base_demand = demand_df["Demand"].tolist()
@@ -220,7 +238,7 @@ if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Utuh Tanpa Modifikasi Logika)
+# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Logika Utuh)
 # ==============================================================================
 def calculate_aggregate_planning(strategy, demand_list):
     inv_prev = init_inv
