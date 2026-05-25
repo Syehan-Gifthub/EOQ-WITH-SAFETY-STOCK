@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # ==============================================================================
-# 1. KONFIGURASI HALAMAN & INJEKSI CSS TOTAL LIGHT MODE (ANTI-DARK VARIABEL)
+# 1. KONFIGURASI HALAMAN & FORCE MUTLAK LIGHT MODE (ANTI-DARK MODE SYSTEM)
 # ==============================================================================
 st.set_page_config(
     page_title="Interactive Aggregate Planning Dashboard",
@@ -13,78 +13,88 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Injeksi CSS super ketat untuk merombak seluruh elemen gelap menjadi putih/cerah
+# Injeksi CSS Radikal tingkat dewa untuk menghancurkan Dark Mode bawaan browser pada elemen Streamlit
 st.markdown("""
 <style>
-    /* Mengubah paksa variabel warna internal Streamlit di level root */
-    :root {
-        --text-color: #000000 !important;
-        --background-color: #ffffff !important;
-        --secondary-background-color: #fdf6f6 !important;
+    /* Mengubah paksa variabel warna internal inti Streamlit langsung dari akarnya */
+    :root, [data-theme="dark"], [data-theme="light"] {
+        --st-background-color: #ffffff !important;
+        --st-secondary-background-color: #fdf6f6 !important;
+        --st-text-color: #000000 !important;
+        background-color: #ffffff !important;
+        color: #000000 !important;
     }
 
-    /* 1. Paksa Background Utama & Area Header Menjadi Putih Bersih */
+    /* 1. Memaksa Background Aplikasi Utama & Container Menjadi Putih Bersih */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMainBlockContainer"] {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
     
-    /* 2. Paksa Sidebar Samping Menjadi Putih Bersih Bersih dengan Garis Pink */
+    /* 2. Memaksa Area Sidebar Samping Menjadi Putih Bersih Jelas */
     [data-testid="stSidebar"], [data-testid="stSidebarUserContent"], [data-testid="stSidebarNav"] {
         background-color: #ffffff !important;
         border-right: 2px solid #ffe4e1 !important;
     }
 
-    /* 3. Paksa Semua Teks Standar Dashboard Menjadi Hitam Pekat (Kereng) */
+    /* 3. Memaksa Semua Elemen Teks Standard Menjadi Hitam Pekat */
     h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, p, li, div, small {
         color: #000000 !important;
     }
     
-    /* Memastikan teks parameter di sidebar hitam dan tebal */
-    [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4 {
+    /* Memaksa teks judul subheader di sidebar agar hitam tebal */
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] label, 
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3, 
+    [data-testid="stSidebar"] h4 {
         color: #000000 !important;
         font-weight: bold !important;
     }
 
-    /* 4. Paksa Background Textbox, Dropdown & Input Angka Menjadi Putih */
+    /* 4. PERBAIKAN RADIKAL SIDEBAR: Paksa Box Input Angka & Selectbox Menjadi Putih Bersih */
     div[data-baseweb="input"], 
     div[data-baseweb="select"], 
     .stNumberInput input, 
     .stSelectbox div, 
     div[role="combobox"],
-    div[data-testid="stMarkdownContainer"] input {
+    input[type="number"],
+    [data-testid="stSidebar"] div {
         background-color: #ffffff !important;
         color: #000000 !important;
-        border: 1px solid #ffb6c1 !important;
     }
     
-    /* Paksa teks di dalam input box dan dropdown agar tetap HITAM */
+    /* Menembus text fill color browser mode gelap */
     input {
         color: #000000 !important;
+        background-color: #ffffff !important;
         -webkit-text-fill-color: #000000 !important;
     }
-    
-    /* 5. Paksa Tombol Pilihan Plus (+) dan Minus (-) Menjadi Cerah */
+
+    /* 5. PERBAIKAN RADIKAL TOMBOL (+ / -): Menghapus Latar Belakang Hitam Sempurna */
     button[title="Increment"], 
     button[title="Decrement"], 
     [data-testid="stNumberInputStepDown"], 
-    [data-testid="stNumberInputStepUp"] {
+    [data-testid="stNumberInputStepUp"],
+    .stNumberInput button {
         color: #000000 !important;
-        background-color: #ffe4e1 !important;
+        background-color: #ffe4e1 !important; /* Warna pink cerah penanda tombol */
         border: 1px solid #ffb6c1 !important;
+        opacity: 1 !important;
     }
     
     button[title="Increment"]:hover, button[title="Decrement"]:hover {
         background-color: #ffccd5 !important;
     }
 
-    /* 6. Memaksa List Pilihan Dropdown yang Muncul Tetap Berlatar Putih & Teks Hitam */
-    ul[role="listbox"], li[role="option"], div[data-baseweb="menu"] {
+    /* 6. Memaksa List Pilihan Dropdown Skenario yang Muncul Keluar Tetap Putih */
+    ul[role="listbox"], li[role="option"], div[data-baseweb="menu"], div[data-baseweb="popover"] {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
 
-    /* 7. Garis Pembatas Horisontal */
+    /* 7. Garis Pembatas Horizontal Bertema Pink */
     hr {
         border: 0 !important;
         height: 2px !important;
@@ -92,30 +102,36 @@ st.markdown("""
         margin: 20px 0 !important;
     }
 
-    /* 8. Desain Navigasi 3 Tab Menu Atas (Tab Aktif Pink Tua, Teks Jelas Putih) */
+    /* 8. PENGEMBANGAN VISUAL MENU TAB BAR ATAS (EFEK TIMBUL KETIKA DIPENCET) */
     button[data-baseweb="tab"] {
         color: #444444 !important;
         font-weight: 600 !important;
-        background-color: #fdf6f6 !important;
-        margin-right: 4px !important;
-        border-radius: 5px 5px 0px 0px !important;
-        padding: 10px 20px !important;
+        background-color: #fdf6f6 !important; /* Latar dasar tab tidak aktif */
+        margin-right: 6px !important;
+        border-radius: 8px 8px 0px 0px !important;
+        padding: 12px 24px !important;
+        border: 1px solid #ffe4e1 !important;
+        border-bottom: none !important;
+        transition: all 0.3s ease !important;
     }
+    
+    /* Efek Timbul Menyala saat Tab Dipilih / Dipencet */
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #ffffff !important;
-        background-color: #d81b60 !important;
-        border-bottom-color: #d81b60 !important;
+        background-color: #d81b60 !important; /* Warna Pink Tua Berkilau */
+        border-color: #d81b60 !important;
+        box-shadow: 0px -4px 10px rgba(216, 27, 96, 0.2) !important; /* Efek bayangan timbul ke atas */
         font-weight: bold !important;
+        transform: translateY(-2px) !important; /* Naik sedikit menciptakan efek 3D */
     }
 
-    /* 9. Penampung Tabel (DataFrame) */
-    [data-testid="stDataEditor"], .stDataFrame, div[data-testid="stTable"] {
+    /* 9. Frame Luar Penampung Tabel Data */
+    [data-testid="stDataEditor"], .stDataFrame, div[data-testid="stTable"], .glideDataGrid {
         background-color: #ffffff !important;
         color: #000000 !important;
-        border: 1px solid #ffe4e1 !important;
     }
 
-    /* 10. Desain Kartu KPI Executive */
+    /* 10. Desain Kartu KPI */
     .kpi-card {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -158,7 +174,7 @@ st.markdown("---")
 # FUNGSI INTERVENSI INTERNALS TABEL AGAR BERLATAR PUTIH, TEKS HITAM PEKAT & KEPALA PINK PASTEL
 def style_table_light(df, precision_val=0):
     return df.style.set_properties(**{
-        'background-color': '#ffffff',      # Isi sel dipaksa putih
+        'background-color': '#ffffff',      # Isi sel dipaksa putih bersih
         'color': '#000000',                 # Teks isi dipaksa hitam pekat
         'border-color': '#ffe4e1'           # Pembatas garis sel pink muda
     }).set_table_styles([
@@ -192,8 +208,9 @@ st.sidebar.subheader("Permintaan (Demand) per Periode")
 default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
 demand_init_df = pd.DataFrame({"Periode": [f"Bulan {i+1}" for i in range(num_periods)], "Demand": default_demand})
 
+# Memaksa warna data editor di samping menggunakan engine style pandas light
 demand_df = st.sidebar.data_editor(
-    demand_init_df,
+    demand_init_df.style.set_properties(**{'background-color': '#ffffff', 'color': '#000000'}),
     hide_index=True
 )
 base_demand = demand_df["Demand"].tolist()
@@ -238,7 +255,7 @@ if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Logika Asli)
+# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Logika Asli Tidak Berubah)
 # ==============================================================================
 def calculate_aggregate_planning(strategy, demand_list):
     inv_prev = init_inv
@@ -427,12 +444,16 @@ with tab1:
                           title=f"Perbandingan Total Biaya Operasional Horison 12 Bulan ({selected_scenario})",
                           color="Strategi", text_auto=',.0f',
                           color_discrete_sequence=["#ffccd5", "#f48fb1", "#c2185b"])
+        
+        # PERBAIKAN GRAFIK PLOTLY SECARA ABSOLUT AGAR TERLIHAT DI MODE APAPUN
         fig_cost.update_layout(
             template="plotly_white",
-            plot_bgcolor='white', 
-            paper_bgcolor='white', 
+            plot_bgcolor='#ffffff', 
+            paper_bgcolor='#ffffff', 
             font=dict(color='#000000', size=12),
-            title_font=dict(color='#000000', size=14)
+            title_font=dict(color='#000000', size=14),
+            xaxis=dict(title_font=dict(color='#000000'), tickfont=dict(color='#000000'), gridcolor='#ffe4e1'),
+            yaxis=dict(title_font=dict(color='#000000'), tickfont=dict(color='#000000'), gridcolor='#ffe4e1')
         )
         st.plotly_chart(fig_cost, use_container_width=True)
         
@@ -441,12 +462,16 @@ with tab1:
                         title="Tingkat Layanan Pemenuhan Permintaan (Service Level %)",
                         color="Strategi", text_auto='.2f', range_y=[0, 105],
                         color_discrete_sequence=["#ffccd5", "#f48fb1", "#c2185b"])
+        
+        # PERBAIKAN GRAFIK PLOTLY SECARA ABSOLUT AGAR TERLIHAT DI MODE APAPUN
         fig_sl.update_layout(
             template="plotly_white",
-            plot_bgcolor='white', 
-            paper_bgcolor='white', 
+            plot_bgcolor='#ffffff', 
+            paper_bgcolor='#ffffff', 
             font=dict(color='#000000', size=12),
-            title_font=dict(color='#000000', size=14)
+            title_font=dict(color='#000000', size=14),
+            xaxis=dict(title_font=dict(color='#000000'), tickfont=dict(color='#000000'), gridcolor='#ffe4e1'),
+            yaxis=dict(title_font=dict(color='#000000'), tickfont=dict(color='#000000'), gridcolor='#ffe4e1')
         )
         st.plotly_chart(fig_sl, use_container_width=True)
 
@@ -496,7 +521,6 @@ with tab2:
         st.dataframe(style_table_light(mob_df, 1), use_container_width=True)
         
         st.subheader("🪵 Raw Material Requirements Planning (BOM Explode Proxy)")
-        # DI SINI LOGIKA UTUH ANDA SUDAH SAYA KEMBALIKAN AMAN KEMBALI SEPERTI KODE AWAL
         raw_mat_df = pd.DataFrame({
             "Periode": df_selected["Periode"],
             "Incoming Material (Unit)": (df_selected["RT Production"] + df_selected["OT Production"]) * 1.05,
@@ -517,8 +541,10 @@ with tab2:
         fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Real", line=dict(color='#d81b60', width=2, dash='dash')))
         fig_dp.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["RT Production"] + df_selected["OT Production"] + df_selected["Subcontracting"], name="Total Produksi", marker_color='#ffccd5'))
         fig_dp.update_layout(
-            barmode='group', template="plotly_white", plot_bgcolor='white', paper_bgcolor='white',
-            font=dict(color='#000000'), title_font=dict(color='#000000')
+            barmode='group', template="plotly_white", plot_bgcolor='#ffffff', paper_bgcolor='#ffffff',
+            font=dict(color='#000000'), title_font=dict(color='#000000'),
+            xaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1'),
+            yaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1')
         )
         st.plotly_chart(fig_dp, use_container_width=True)
     with v2:
@@ -526,8 +552,10 @@ with tab2:
                         title="Dinamika Komponen Biaya per Periode",
                         color_discrete_sequence=["#ffccd5", "#f48fb1", "#f8bbd0", "#ff80ab", "#ff4081", "#c2185b"])
         fig_cb.update_layout(
-            template="plotly_white", plot_bgcolor='white', paper_bgcolor='white',
-            font=dict(color='#000000'), title_font=dict(color='#000000')
+            template="plotly_white", plot_bgcolor='#ffffff', paper_bgcolor='#ffffff',
+            font=dict(color='#000000'), title_font=dict(color='#000000'),
+            xaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1'),
+            yaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1')
         )
         st.plotly_chart(fig_cb, use_container_width=True)
 
@@ -536,8 +564,10 @@ with tab2:
         fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, line_shape="linear")
         fig_inv.update_traces(line_color='#d81b60', marker=dict(color='#ff4081'))
         fig_inv.update_layout(
-            template="plotly_white", plot_bgcolor='white', paper_bgcolor='white',
-            font=dict(color='#000000'), title_font=dict(color='#000000')
+            template="plotly_white", plot_bgcolor='#ffffff', paper_bgcolor='#ffffff',
+            font=dict(color='#000000'), title_font=dict(color='#000000'),
+            xaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1'),
+            yaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1')
         )
         st.plotly_chart(fig_inv, use_container_width=True)
     with v4:
@@ -545,8 +575,10 @@ with tab2:
         fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["OT Production"], name="Overtime Vol", marker_color='#ffccd5'))
         fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["Subcontracting"], name="Subcontract Vol", marker_color='#f48fb1'))
         fig_os.update_layout(
-            barmode='stack', template="plotly_white", plot_bgcolor='white', paper_bgcolor='white',
-            font=dict(color='#000000'), title_font=dict(color='#000000')
+            barmode='stack', template="plotly_white", plot_bgcolor='#ffffff', paper_bgcolor='#ffffff',
+            font=dict(color='#000000'), title_font=dict(color='#000000'),
+            xaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1'),
+            yaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1')
         )
         st.plotly_chart(fig_os, use_container_width=True)
 
@@ -589,7 +621,9 @@ with tab3:
     fig_robust.update_layout(
         title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", 
         yaxis_title="Total Biaya (IDR)", 
-        template="plotly_white", plot_bgcolor='white', paper_bgcolor='white', 
-        font=dict(color='#000000'), title_font=dict(color='#000000')
+        template="plotly_white", plot_bgcolor='#ffffff', paper_bgcolor='#ffffff', 
+        font=dict(color='#000000'), title_font=dict(color='#000000'),
+        xaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1'),
+        yaxis=dict(tickfont=dict(color='#000000'), gridcolor='#ffe4e1')
     )
     st.plotly_chart(fig_robust, use_container_width=True)
