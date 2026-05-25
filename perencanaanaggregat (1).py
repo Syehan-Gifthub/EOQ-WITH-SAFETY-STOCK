@@ -168,25 +168,32 @@ st.markdown("""
     .table-template th { background-color: #e2e8f0; color: #0f172a; padding: 6px 12px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; text-align: left; }
     .table-template td { padding: 6px 12px; border: 1px solid #cbd5e1; color: #475569; font-size: 13px; font-family: monospace; }
     
-    /* Style untuk copyright */
-    .footer-copyright {
-        text-align: center;
+    /* 8. Fix Posisi Copyright Selalu Muncul Di Kanan Bawah Layar (Sticky/Fixed) */
+    .sticky-copyright {
+        position: fixed;
+        bottom: 12px;
+        right: 20px;
+        background-color: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(4px);
+        padding: 6px 14px;
+        border-radius: 20px;
+        border: 1px solid #e2e8f0;
         color: #64748b !important;
-        font-size: 14px;
-        font-weight: 500;
-        padding: 20px 0;
-        margin-top: 40px;
-        border-top: 1px solid #e2e8f0;
+        font-size: 12px;
+        font-weight: 600;
+        z-index: 999999;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        pointer-events: none; /* Supaya tidak mengganggu klik elemen di belakangnya */
     }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# INTEGRASI LOGO DARI GOOGLE DRIVE DI BAGIAN ATAS DASHBOARD
+# INTEGRASI LOGO VIA DRIVE REAL DIRECT LINK 
 # ==============================================================================
-# Menggunakan URL export langsung agar gambar dapat ter-render di Streamlit
-logo_url = "https://docs.google.com/uc?export=view&id=1V3x3dfHlsHP-LLbkxVGt4Z9NmfdoR8XH"
-st.image(logo_url, width=150)
+# Menggunakan struktur URL uc?id= untuk melewati halaman preview Google Drive
+direct_logo_url = "https://docs.google.com/uc?id=1V3x3dfHlsHP-LLbkxVGt4Z9NmfdoR8XH"
+st.image(direct_logo_url, width=150)
 
 st.title("📊 Sistem Pendukung Keputusan: Perencanaan Agregat Interaktif (12 Periode)")
 st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan *Robust Planning* berbasis skenario.")
@@ -708,10 +715,10 @@ with tab3:
     st.plotly_chart(fig_robust, use_container_width=True)
 
 # ==============================================================================
-# FOOTER - PENAMBAHAN COPYRIGHT DI BAGIAN BAWAH DASHBOARD
+# FOOTER - STICKY/FIXED POSITION FLOATING COPYRIGHT DI KANAN BAWAH LAYAR
 # ==============================================================================
 st.markdown("""
-<div class="footer-copyright">
-    Copyright © 2026 Laboratorium Teknik Industri Dasar. All Rights Reserved.
+<div class="sticky-copyright">
+    Copyright © 2026 Laboratorium Teknik Industri Dasar
 </div>
 """, unsafe_allow_html=True)
