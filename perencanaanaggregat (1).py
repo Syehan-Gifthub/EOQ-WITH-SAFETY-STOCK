@@ -167,8 +167,26 @@ st.markdown("""
     .table-template { width: 100%; border-collapse: collapse; margin: 10px 0; background-color: #ffffff; }
     .table-template th { background-color: #e2e8f0; color: #0f172a; padding: 6px 12px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; text-align: left; }
     .table-template td { padding: 6px 12px; border: 1px solid #cbd5e1; color: #475569; font-size: 13px; font-family: monospace; }
+    
+    /* Style untuk copyright */
+    .footer-copyright {
+        text-align: center;
+        color: #64748b !important;
+        font-size: 14px;
+        font-weight: 500;
+        padding: 20px 0;
+        margin-top: 40px;
+        border-top: 1px solid #e2e8f0;
+    }
 </style>
 """, unsafe_allow_html=True)
+
+# ==============================================================================
+# INTEGRASI LOGO DARI GOOGLE DRIVE DI BAGIAN ATAS DASHBOARD
+# ==============================================================================
+# Menggunakan URL export langsung agar gambar dapat ter-render di Streamlit
+logo_url = "https://docs.google.com/uc?export=view&id=1V3x3dfHlsHP-LLbkxVGt4Z9NmfdoR8XH"
+st.image(logo_url, width=150)
 
 st.title("📊 Sistem Pendukung Keputusan: Perencanaan Agregat Interaktif (12 Periode)")
 st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan *Robust Planning* berbasis skenario.")
@@ -688,3 +706,12 @@ with tab3:
     fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", yaxis_title="Total Biaya (IDR)")
     fig_robust = apply_forced_light_theme(fig_robust)
     st.plotly_chart(fig_robust, use_container_width=True)
+
+# ==============================================================================
+# FOOTER - PENAMBAHAN COPYRIGHT DI BAGIAN BAWAH DASHBOARD
+# ==============================================================================
+st.markdown("""
+<div class="footer-copyright">
+    Copyright © 2026 Laboratorium Teknik Industri Dasar. All Rights Reserved.
+</div>
+""", unsafe_allow_html=True)
