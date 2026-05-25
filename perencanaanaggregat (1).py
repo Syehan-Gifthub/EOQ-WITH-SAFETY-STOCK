@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# FORCE TOTAL LIGHT MODE VIA CSS INJECTION
+# FORCE TOTAL LIGHT MODE VIA CSS INJECTION (TERMASUK FORCE WARNA TABEL)
 st.markdown("""
 <style>
     /* 1. Memaksa Background Aplikasi Utama & Sidebar Menjadi Putih Bersih */
@@ -69,7 +69,14 @@ st.markdown("""
         border-bottom-color: #ffb6c1 !important; /* Garis bawah tab pink muda */
     }
 
-    /* 6. Style untuk KPI Card */
+    /* 6. Memaksa elemen penampung data_editor & dataframe agar berlatar terang */
+    [data-testid="stDataEditor"], .stDataFrame {
+        background-color: #ffffff !important;
+        color: #111111 !important;
+        border: 1px solid #ffe4e1 !important;
+    }
+
+    /* 7. Style untuk KPI Card */
     .kpi-card {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -100,7 +107,7 @@ st.markdown("""
         margin-top: 2px !important;
     }
     
-    /* 7. Style untuk Kotak Rekomendasi */
+    /* 8. Style untuk Kotak Rekomendasi */
     .recommendation-box {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -125,8 +132,16 @@ st.title("📊 Sistem Pendukung Keputusan: Perencanaan Agregat Interaktif (12 Pe
 st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan *Robust Planning* berbasis skenario.")
 st.markdown("---")
 
+# FUNGSI PEMBANTU UNTUK MEMAKSA WARNA TABEL JADI CERAH (PUTIH-PINK)
+def style_table_light(df, precision_val=0):
+    return df.style.set_properties(**{
+        'background-color': '#ffffff',
+        'color': '#111111',
+        'border-color': '#ffe4e1'
+    }).format(precision=precision_val)
+
 # ==============================================================================
-# 2. SIDEBAR - INPUT PARAMETER OPERASIONAL & BIAYA (Logika dipertahankan utuh)
+# 2. SIDEBAR - INPUT PARAMETER OPERASIONAL & BIAYA
 # ==============================================================================
 st.sidebar.header("🛠️ Parameter Operasional")
 num_periods = 12
@@ -134,8 +149,10 @@ num_periods = 12
 # Input Demand Base via UI Dataframe
 st.sidebar.subheader("Permintaan (Demand) per Periode")
 default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
+demand_init_df = pd.DataFrame({"Periode": [f"Bulan {i+1}" for i in range(num_periods)], "Demand": default_demand})
+# Memaksa warna data_editor lewat styling pandas jika diperlukan
 demand_df = st.sidebar.data_editor(
-    pd.DataFrame({"Periode": [f"Bulan {i+1}" for i in range(num_periods)], "Demand": default_demand}),
+    demand_init_df,
     hide_index=True
 )
 base_demand = demand_df["Demand"].tolist()
@@ -180,7 +197,7 @@ if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Logika dipertahankan utuh)
+# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Utuh tanpa perubahan logika)
 # ==============================================================================
 def calculate_aggregate_planning(strategy, demand_list):
     inv_prev = init_inv
@@ -303,7 +320,7 @@ for strat in ["Chase", "Level", "Mixed"]:
         results[strat][scen] = calculate_aggregate_planning(strat, d_list)
 
 # ==============================================================================
-# 4. EVALUASI METRIK KPI UTAMA VIA EXPECTED VALUE (Logika dipertahankan utuh)
+# 4. EVALUASI METRIK KPI UTAMA VIA EXPECTED VALUE
 # ==============================================================================
 summary_metrics = []
 for strat in ["Chase", "Level", "Mixed"]:
@@ -375,7 +392,6 @@ with tab1:
                           title=f"Perbandingan Total Biaya Operasional Horison 12 Bulan ({selected_scenario})",
                           color="Strategi", text_auto=',.0f',
                           color_discrete_sequence=["#ffb6c1", "#f48fb1", "#c2185b"])
-        # Memastikan background plot tetap clean white
         fig_cost.update_layout(plot_bgcolor='white', paper_bgcolor='white', font_color='#111111')
         st.plotly_chart(fig_cost, use_container_width=True)
     with c2:
@@ -412,24 +428,24 @@ with tab2:
     
     st.subheader(f"📋 Master Table Aggregate Production Planning: {selected_strategy} ({selected_scenario})")
     master_display = df_selected[["Periode", "Demand", "Net Demand", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]]
-    st.dataframe(master_display.style.format(precision=0), use_container_width=True)
+    st.dataframe(style_table_light(master_display, 0), use_container_width=True)
     
     if selected_strategy == "Chase":
         st.subheader("👨‍🏭 Workforce & Capacity Adjustment Sheet (Chase Focus)")
-        st.dataframe(df_selected[["Periode", "Workforce", "Hiring", "Firing", "RT Production"]].style.format(precision=0), use_container_width=True)
+        st.dataframe(style_table_light(df_selected[["Periode", "Workforce", "Hiring", "Firing", "RT Production"]], 0), use_container_width=True)
         
     elif selected_strategy == "Level":
         st.subheader("📦 Inventory Buffer & Capacity Efficiency Sheet (Level Focus)")
         df_level_spec = df_selected[["Periode", "Inventory", "Stockout", "RT Production"]].copy()
         df_level_spec["Capacity Efficiency (%)"] = (df_level_spec["RT Production"] / (df_selected["Workforce"] * worker_cap)) * 100
-        st.dataframe(df_level_spec.style.format(precision=1), use_container_width=True)
+        st.dataframe(style_table_light(df_level_spec, 1), use_container_width=True)
         
     elif selected_strategy == "Mixed":
         st.subheader("🔄 Sourcing Optimization & Make-or-Buy Analysis (Mixed Focus)")
         mob_df = df_selected[["Periode", "RT Production", "OT Production", "Subcontracting"]].copy()
         total_p = mob_df["RT Production"] + mob_df["OT Production"] + mob_df["Subcontracting"]
         mob_df["Internal Content (%)"] = np.where(total_p > 0, ((mob_df["RT Production"] + mob_df["OT Production"]) / total_p) * 100, 0)
-        st.dataframe(mob_df.style.format(precision=1), use_container_width=True)
+        st.dataframe(style_table_light(mob_df, 1), use_container_width=True)
         
         st.subheader("🪵 Raw Material Requirements Planning (BOM Explode Proxy)")
         raw_mat_df = pd.DataFrame({
@@ -439,11 +455,11 @@ with tab2:
             "Ending Inventory Material": np.maximum(0, 100 + ((df_selected["RT Production"] + df_selected["OT Production"]) * 0.05)),
             "Material Shortage": 0
         })
-        st.dataframe(raw_mat_df.style.format(precision=0), use_container_width=True)
+        st.dataframe(style_table_light(raw_mat_df, 0), use_container_width=True)
 
     st.subheader("💸 Analisis Finansial & Struktur Biaya Berjalan")
     cost_cols = ["Periode", "Material Cost", "Production Cost", "Labor Cost", "Hiring Cost", "Firing Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost", "Total Cost"]
-    st.dataframe(df_selected[cost_cols].style.format(precision=0), use_container_width=True)
+    st.dataframe(style_table_light(df_selected[cost_cols], 0), use_container_width=True)
     
     st.markdown("### 📊 Visualisasi Performa Berkala (12 Periode)")
     v1, v2 = st.columns(2)
@@ -496,12 +512,7 @@ with tab3:
         })
         
     robust_df = pd.DataFrame(robust_records)
-    st.dataframe(robust_df.style.format({
-        "Skenario Pesimis (Cost)": "IDR {:,.0f}",
-        "Skenario Normal (Cost)": "IDR {:,.0f}",
-        "Skenario Optimis (Cost)": "IDR {:,.0f}",
-        "Expected Robust Cost": "IDR {:,.0f}"
-    }), use_container_width=True)
+    st.dataframe(style_table_light(robust_df, 0), use_container_width=True)
     
     fig_robust = go.Figure()
     colors_robust = {"Chase": "#ffb6c1", "Level": "#f48fb1", "Mixed": "#c2185b"}
