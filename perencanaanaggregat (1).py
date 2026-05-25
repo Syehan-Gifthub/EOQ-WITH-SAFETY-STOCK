@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # ==============================================================================
-# 1. KONFIGURASI HALAMAN & STYLE DASHBOARD (MINIMALIS & PROFESIONAL LIGHT)
+# 1. KONFIGURASI HALAMAN & STYLE DASHBOARD (MINIMALIS, PROFESIONAL & GRADASI)
 # ==============================================================================
 st.set_page_config(
     page_title="Interactive Aggregate Planning Dashboard",
@@ -13,128 +13,141 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Injeksi CSS Premium: Solusi Mutakhir Tembus Canvas Dataframe & Tema Gradasi Profesional
+# Custom CSS Premium: Minimalis, Profesional, dengan Sentuhan Gradasi Halus
 st.markdown("""
 <style>
-    /* 1. Reset Paksa Skema Light Secara Global */
+    /* 1. Reset Global ke Light Mode Total & Bebas Tabrakan Warna */
     :root {
         color-scheme: light !important;
         --st-background: #ffffff !important;
-        --st-color: #1f2937 !important;
+        --st-color: #1e293b !important;
     }
     
     html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main {
         background-color: #ffffff !important;
-        color: #1f2937 !important;
+        color: #1e293b !important;
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* 2. Desain Sidebar Minimalis dengan Pembatas Gradasi Halus */
+    /* 2. Desain Sidebar Minimalis & Bersih */
     [data-testid="stSidebar"] {
-        background-color: #f8fafc !important; /* Biru abu-abu sangat muda */
-        border-right: 1px solid #e2e8f0 !important;
-        position: relative;
-    }
-    [data-testid="stSidebar"]::after {
-        content: "";
-        position: absolute;
-        right: 0; top: 0; bottom: 0; width: 4px;
-        background: linear-gradient(to bottom, #3b82f6, #06b6d4); /* Gradasi Profesional */
+        background-color: #f8fafc !important; /* Abu-abu ultra light profesional */
+        border-right: 1px solid #e2e8f0 !important; /* Garis pembatas sangat tipis & ringan */
     }
     
-    [data-testid="stSidebar"] label, [data-testid="stSidebar"] p, [data-testid="stSidebar"] h3 {
+    [data-testid="stSidebar"] .stMarkdown, 
+    [data-testid="stSidebar"] label, 
+    [data-testid="stSidebar"] p,
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {
         color: #0f172a !important;
         font-weight: 600 !important;
     }
 
-    /* 3. SOLUSI TOTAL UTK DATAFRAME & DATA EDITOR (MENEMBUS SHADOW-ROOT) */
-    [data-testid="stDataFrame"], [data-testid="stDataEditor"], [data-testid="stTable"],
-    div[class^="stga"], div[class^="st-emotion-cache"] div[role="grid"] {
+    /* 3. Membongkar Paksa Tabel st.dataframe & st.data_editor Agar Full Putih & Teks Hitam */
+    div[data-testid="stDataFrame"], div[data-testid="stDataEditor"], [data-testid="stTable"] {
         background-color: #ffffff !important;
-        color: #1f2937 !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 8px !important;
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
     }
-    
-    /* Target khusus cell grid internal Streamlit */
-    div[data-testid="stDataFrame"] *, div[data-testid="stDataEditor"] * {
-        --st-canvas-background: #ffffff !important;
-        background-color: transparent !important;
-    }
 
-    /* 4. Perbaikan Input Kontrol, Dropdown & Tombol Langkah (+/-) */
+    /* Override paksa komponen internal canvas/glide-data-grid milik Streamlit */
+    div[data-testid="stGridCanvas"] canvas {
+        filter: invert(0) !important; /* Mencegah inversi warna otomatis oleh browser/server */
+    }
+    
+    /* Menargetkan background dan teks kontainer internal data editor */
+    div[data-baseweb="table"] {
+        background-color: #ffffff !important;
+        color: #1e293b !important;
+    }
+    
+    /* 4. Perbaikan Kotak Input & Tombol (+ / -) di Sidebar */
     div[data-baseweb="input"], div[data-baseweb="select"], select, input {
         background-color: #ffffff !important;
-        color: #0f172a !important;
+        color: #1e293b !important;
         border: 1px solid #cbd5e1 !important;
         border-radius: 6px !important;
     }
-    div[data-baseweb="input"]:focus-within {
-        border-color: #3b82f6 !important;
-    }
     
-    /* Tombol +/- di number input dibuat bernuansa profesional */
+    /* Desain tombol step penambah/pengurang angka agar tampak profesional */
     button[title="Increment"], button[title="Decrement"], 
     [data-testid="stNumberInputStepDown"], [data-testid="stNumberInputStepUp"] {
         background-color: #f1f5f9 !important;
-        color: #0f172a !important;
+        color: #475569 !important;
         border: 1px solid #cbd5e1 !important;
-        border-radius: 4px !important;
-        transition: all 0.2s;
+        opacity: 1 !important;
     }
+    
     button[title="Increment"]:hover, button[title="Decrement"]:hover {
-        background-color: #3b82f6 !important;
-        color: #ffffff !important;
+        background-color: #e2e8f0 !important;
+        color: #0f172a !important;
     }
 
-    /* 5. Desain Komponen Eksekutif (KPI Card & Rekomendasi Box) */
+    /* 5. Komponen Card KPI & Rekomendasi Dengan Aksen Gradasi Elegan */
     .kpi-card {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-radius: 12px;
+        background-color: #ffffff !important;
+        border-radius: 10px;
         padding: 22px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        border-left: 5px solid #3b82f6 !important; /* Aksen Biru */
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        border: 1px solid #e2e8f0;
         position: relative;
         overflow: hidden;
     }
+    /* Memberikan indikator bar gradasi tipis di sisi kiri card */
+    .kpi-card::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 4px;
+        background: linear-gradient(180deg, #3b82f6 0%, #6366f1 100%);
+    }
     .kpi-title { font-size: 13px; color: #64748b !important; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .kpi-value { font-size: 26px; color: #0f172a !important; font-weight: 700; margin-top: 6px; }
+    .kpi-value { font-size: 24px; color: #0f172a !important; font-weight: 700; margin-top: 6px; }
     .kpi-card small { color: #475569 !important; font-weight: 500; }
     
+    /* Box Rekomendasi dengan latar gradasi linear tipis */
     .recommendation-box {
-        background: linear-gradient(135deg, #f0fdf4 0%, #ecfeff 100%) !important; /* Gradasi Hijau-Teal Segar */
-        border: 1px solid #ccfbf1 !important;
-        border-left: 6px solid #0d9488 !important;
-        border-radius: 12px;
-        padding: 26px;
-        box-shadow: 0 4px 12px rgba(13, 148, 136, 0.03);
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%) !important; /* Gradasi hijau muda sukses yang sangat soft */
+        border: 1px solid #bbf7d0;
+        border-radius: 10px;
+        padding: 25px;
+        position: relative;
     }
-    .recommendation-box h4 { color: #0f766e !important; font-weight: 700; margin-bottom: 12px; }
+    .recommendation-box::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 5px;
+        background: linear-gradient(180deg, #22c55e 0%, #10b981 100%);
+    }
+    .recommendation-box h4 { color: #166534 !important; font-weight: 700; margin-top: 0; }
     .recommendation-box li, .recommendation-box p { color: #1e293b !important; font-weight: 500; line-height: 1.6; }
 
-    /* 6. Pembatas Garis Minimalis & Desain Tab Navigasi */
+    /* 6. Garis Pembatas (HR) & Desain Tab Minimalis */
     hr {
         border: 0;
         height: 1px;
-        background: linear-gradient(to right, #e2e8f0, #cbd5e1, #e2e8f0) !important;
-        margin: 25px 0;
+        background: #e2e8f0 !important;
+        margin: 24px 0;
     }
 
-    .stTabs [data-baseweb="tab-list"] { gap: 6px; }
+    .stTabs [data-baseweb="tab-list"] { 
+        gap: 4px; 
+        border-bottom: 1px solid #e2e8f0;
+    }
     .stTabs [data-baseweb="tab"] {
-        background-color: #f8fafc !important;
-        border: 1px solid #e2e8f0 !important;
+        background-color: transparent !important;
+        border: none !important;
         color: #64748b !important;
-        padding: 10px 18px;
-        border-radius: 6px 6px 0 0;
+        padding: 10px 16px;
         font-weight: 500;
     }
     .stTabs [aria-selected="true"] {
-        background-color: #ffffff !important;
-        border-top: 3px solid #3b82f6 !important;
         color: #3b82f6 !important;
+        border-bottom: 2px solid #3b82f6 !important;
         font-weight: 600 !important;
     }
 </style>
@@ -218,6 +231,7 @@ def calculate_aggregate_planning(strategy, demand_list):
         d_t = demand_list[t]
         net_demand = d_t + safety_stock
         
+        # 1. Workforce & Regular Time Production Planning Based on Strategy
         if strategy == "Chase":
             wf_needed = int(np.ceil(net_demand / worker_cap))
             hiring = max(0, wf_needed - wf_prev)
@@ -235,6 +249,7 @@ def calculate_aggregate_planning(strategy, demand_list):
             firing = 0
             rt_prod = wf_current * worker_cap
 
+        # 2. Perhitungan Overtime & Subcontracting dengan Kebijakan Minimum
         deficit = max(0, net_demand - rt_prod - inv_prev)
         
         ot_prod = 0
@@ -252,6 +267,7 @@ def calculate_aggregate_planning(strategy, demand_list):
         elif strategy in ["Chase", "Level"] and deficit > 0:
             pass
 
+        # 3. Logika Inventori & Stockout Balance Sheet
         total_supply = inv_prev + rt_prod + ot_prod + sub_prod
         balance = total_supply - net_demand
         
@@ -262,6 +278,7 @@ def calculate_aggregate_planning(strategy, demand_list):
             inv_end = 0
             stockout = abs(balance)
             
+        # 4. Kalkulasi Struktur Biaya Detail per Periode
         cost_mat = (rt_prod + ot_prod) * c_material 
         cost_rep = rt_prod * c_regular
         cost_labor = wf_current * 3000000
@@ -303,12 +320,14 @@ def calculate_aggregate_planning(strategy, demand_list):
         
     return pd.DataFrame(records)
 
+# Penyesuaian Multiplier Skenario Demand Uncertainty
 demand_scenarios = {
     "Normal": base_demand,
     "Optimis": [int(d * 1.25) for d in base_demand],
     "Pesimis": [int(d * 0.75) for d in base_demand]
 }
 
+# Generate Data untuk Seluruh Kombinasi Strategi & Skenario
 results = {}
 for strat in ["Chase", "Level", "Mixed"]:
     results[strat] = {}
@@ -361,17 +380,17 @@ tab1, tab2, tab3 = st.tabs([
     "🎲 Analisis Risiko Skenario (Robust Planning)"
 ])
 
-# Fungsi Helper: Menormalisasi Grafik ke Pure Light Mode dengan Font Hitam Pekat
-def apply_professional_light_theme(fig):
+# Fungsi helper premium untuk grafik Plotly (Background Transparan & Grid Halus & Teks Gelap Pekat)
+def apply_forced_light_theme(fig):
     fig.update_layout(
         template="plotly_white",
-        paper_bgcolor='#ffffff',
-        plot_bgcolor='#ffffff',
-        font=dict(color="#1e293b", size=12),
-        title_font=dict(color="#0f172a", size=14, face="Arial"),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color="#0f172a", family="'Inter', sans-serif"),
+        title_font=dict(color="#0f172a", size=14, family="'Inter', sans-serif"),
         xaxis=dict(gridcolor="#f1f5f9", tickfont=dict(color="#475569"), title_font=dict(color="#0f172a")),
         yaxis=dict(gridcolor="#f1f5f9", tickfont=dict(color="#475569"), title_font=dict(color="#0f172a")),
-        legend=dict(font=dict(color="#1e293b"), bgcolor="rgba(255,255,255,0.8)")
+        legend=dict(font=dict(color="#475569"))
     )
     return fig
 
@@ -400,14 +419,14 @@ with tab1:
     with c1:
         fig_cost = px.bar(summary_df, x="Strategi", y="Total Cost (Active)", 
                           title=f"Perbandingan Total Biaya Operasional Horison 12 Bulan ({selected_scenario})",
-                          color="Strategi", text_auto=',.0f')
-        fig_cost = apply_professional_light_theme(fig_cost)
+                          color="Strategi", text_auto=',.0f', color_discrete_sequence=px.colors.qualitative.Safe)
+        fig_cost = apply_forced_light_theme(fig_cost)
         st.plotly_chart(fig_cost, use_container_width=True)
     with c2:
         fig_sl = px.bar(summary_df, x="Strategi", y="Service Level", 
                         title="Tingkat Layanan Pemenuhan Permintaan (Service Level %)",
-                        color="Strategi", text_auto='.2f', range_y=[0, 105])
-        fig_sl = apply_professional_light_theme(fig_sl)
+                        color="Strategi", text_auto='.2f', range_y=[0, 105], color_discrete_sequence=px.colors.qualitative.Safe)
+        fig_sl = apply_forced_light_theme(fig_sl)
         st.plotly_chart(fig_sl, use_container_width=True)
 
     st.markdown("### 🤖 Rekomendasi Strategi Optimal")
@@ -476,25 +495,26 @@ with tab2:
         fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Real", line=dict(color='#ef4444', width=2, dash='dash')))
         fig_dp.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["RT Production"] + df_selected["OT Production"] + df_selected["Subcontracting"], name="Total Produksi", marker_color='#3b82f6'))
         fig_dp.update_layout(title="Perbandingan Tren Permintaan vs Realisasi Pasokan (12 Bulan)", barmode='group')
-        fig_dp = apply_professional_light_theme(fig_dp)
+        fig_dp = apply_forced_light_theme(fig_dp)
         st.plotly_chart(fig_dp, use_container_width=True)
     with v2:
         fig_cb = px.bar(df_selected, x="Periode", y=["Material Cost", "Production Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost"],
-                        title="Dinamika Komponen Biaya per Periode")
-        fig_cb = apply_professional_light_theme(fig_cb)
+                        title="Dinamika Komponen Biaya per Periode", color_discrete_sequence=px.colors.qualitative.Safe)
+        fig_cb = apply_forced_light_theme(fig_cb)
         st.plotly_chart(fig_cb, use_container_width=True)
 
     v3, v4 = st.columns(2)
     with v3:
         fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, line_shape="linear")
-        fig_inv = apply_professional_light_theme(fig_inv)
+        fig_inv.update_traces(line=dict(color='#10b981'))
+        fig_inv = apply_forced_light_theme(fig_inv)
         st.plotly_chart(fig_inv, use_container_width=True)
     with v4:
         fig_os = go.Figure()
         fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["OT Production"], name="Overtime Vol", marker_color='#f59e0b'))
         fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["Subcontracting"], name="Subcontract Vol", marker_color='#8b5cf6'))
         fig_os.update_layout(title="Alokasi Kapasitas Tambahan: Lembur vs Pihak Ketiga", barmode='stack')
-        fig_os = apply_professional_light_theme(fig_os)
+        fig_os = apply_forced_light_theme(fig_os)
         st.plotly_chart(fig_os, use_container_width=True)
 
 # ------------------------------------------------------------------------------
@@ -536,5 +556,5 @@ with tab3:
             mode='lines+markers', name=f"Profil Risiko {strat}"
         ))
     fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", yaxis_title="Total Biaya (IDR)")
-    fig_robust = apply_professional_light_theme(fig_robust)
+    fig_robust = apply_forced_light_theme(fig_robust)
     st.plotly_chart(fig_robust, use_container_width=True)
