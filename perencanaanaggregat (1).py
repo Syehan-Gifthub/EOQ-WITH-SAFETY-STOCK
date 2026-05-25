@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
-import io  # Penambahan modul input/output untuk pengelolaan file Excel instan
+import io
 
 # ==============================================================================
 # 1. KONFIGURASI HALAMAN & STYLE DASHBOARD (MINIMALIS, PROFESIONAL & GRADASI)
@@ -17,7 +17,6 @@ st.set_page_config(
 # Custom CSS Premium: Minimalis, Profesional, dengan Sentuhan Gradasi Halus
 st.markdown("""
 <style>
-    /* 1. Reset Global ke Light Mode Total & Bebas Tabrakan Warna */
     :root {
         color-scheme: light !important;
         --st-background: #ffffff !important;
@@ -30,10 +29,9 @@ st.markdown("""
         font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     }
     
-    /* 2. Desain Sidebar Minimalis & Bersih */
     [data-testid="stSidebar"] {
-        background-color: #f8fafc !important; /* Abu-abu ultra light profesional */
-        border-right: 1px solid #e2e8f0 !important; /* Garis pembatas sangat tipis & ringan */
+        background-color: #f8fafc !important;
+        border-right: 1px solid #e2e8f0 !important;
     }
     
     [data-testid="stSidebar"] .stMarkdown, 
@@ -46,7 +44,6 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 3. Membongkar Paksa Tabel st.dataframe & st.data_editor Agar Full Putih & Teks Hitam */
     div[data-testid="stDataFrame"], div[data-testid="stDataEditor"], [data-testid="stTable"] {
         background-color: #ffffff !important;
         border: 1px solid #cbd5e1 !important;
@@ -54,18 +51,15 @@ st.markdown("""
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05) !important;
     }
 
-    /* Override paksa komponen internal canvas/glide-data-grid milik Streamlit */
     div[data-testid="stGridCanvas"] canvas {
-        filter: invert(0) !important; /* Mencegah inversi warna otomatis oleh browser/server */
+        filter: invert(0) !important;
     }
     
-    /* Menargetkan background dan teks kontainer internal data editor */
     div[data-baseweb="table"] {
         background-color: #ffffff !important;
         color: #1e293b !important;
     }
     
-    /* 4. Perbaikan Kotak Input & Tombol (+ / -) di Sidebar */
     div[data-baseweb="input"], div[data-baseweb="select"], select, input {
         background-color: #ffffff !important;
         color: #1e293b !important;
@@ -73,7 +67,6 @@ st.markdown("""
         border-radius: 6px !important;
     }
     
-    /* Desain tombol step penambah/pengurang angka agar tampak profesional */
     button[title="Increment"], button[title="Decrement"], 
     [data-testid="stNumberInputStepDown"], [data-testid="stNumberInputStepUp"] {
         background-color: #f1f5f9 !important;
@@ -81,13 +74,7 @@ st.markdown("""
         border: 1px solid #cbd5e1 !important;
         opacity: 1 !important;
     }
-    
-    button[title="Increment"]:hover, button[title="Decrement"]:hover {
-        background-color: #e2e8f0 !important;
-        color: #0f172a !important;
-    }
 
-    /* 5. Komponen Card KPI & Rekomendasi Dengan Aksen Gradasi Elegan */
     .kpi-card {
         background-color: #ffffff !important;
         border-radius: 10px;
@@ -97,7 +84,6 @@ st.markdown("""
         position: relative;
         overflow: hidden;
     }
-    /* Memberikan indikator bar gradasi tipis di sisi kiri card */
     .kpi-card::before {
         content: "";
         position: absolute;
@@ -109,9 +95,8 @@ st.markdown("""
     .kpi-value { font-size: 24px; color: #0f172a !important; font-weight: 700; margin-top: 6px; }
     .kpi-card small { color: #475569 !important; font-weight: 500; }
     
-    /* Box Rekomendasi dengan latar gradasi linear tipis */
     .recommendation-box {
-        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%) !important; /* Gradasi hijau muda sukses yang sangat soft */
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%) !important;
         border: 1px solid #bbf7d0;
         border-radius: 10px;
         padding: 25px;
@@ -127,7 +112,6 @@ st.markdown("""
     .recommendation-box h4 { color: #166534 !important; font-weight: 700; margin-top: 0; }
     .recommendation-box li, .recommendation-box p { color: #1e293b !important; font-weight: 500; line-height: 1.6; }
 
-    /* 6. Garis Pembatas (HR) & Desain Tab Minimalis */
     hr {
         border: 0;
         height: 1px;
@@ -135,24 +119,6 @@ st.markdown("""
         margin: 24px 0;
     }
 
-    .stTabs [data-baseweb="tab-list"] { 
-        gap: 4px; 
-        border-bottom: 1px solid #e2e8f0;
-    }
-    .stTabs [data-baseweb="tab"] {
-        background-color: transparent !important;
-        border: none !important;
-        color: #64748b !important;
-        padding: 10px 16px;
-        font-weight: 500;
-    }
-    .stTabs [aria-selected="true"] {
-        color: #3b82f6 !important;
-        border-bottom: 2px solid #3b82f6 !important;
-        font-weight: 600 !important;
-    }
-
-    /* 7. Box Panduan Upload Excel Premium */
     .upload-box {
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
         border: 1px solid #cbd5e1;
@@ -181,61 +147,69 @@ st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan 
 st.markdown("---")
 
 # ==============================================================================
-# STRUKTUR MANAJEMEN STATE & INTEGRASI EXCEL YANG SUDAH DIPERBAIKI (ANTI-RESET)
+# MANAJEMEN STATE & INTEGRASI EXCEL LENGKAP (5 KOLOM)
 # ==============================================================================
 num_periods = 12
-default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
 
-# Mencegah state terhapus saat interaksi widget lain berlangsung
-if "base_demand" not in st.session_state:
-    st.session_state.base_demand = default_demand.copy()
+# Inisialisasi awal Master Data jika belum ada di session state
+if "master_data" not in st.session_state:
+    st.session_state.master_data = pd.DataFrame({
+        "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
+        "Demand": [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900],
+        "Kapasitas per Pekerja": [70] * num_periods,
+        "Tenaga Kerja": [20] * num_periods,
+        "Inventory Awal": [200] + [0] * (num_periods - 1)  # Default awal di bulan pertama
+    })
+
 if "editor_trigger" not in st.session_state:
     st.session_state.editor_trigger = 0
 
-# Desain Banner Instruksi Upload yang Menarik & Informatif
+# Tampilan Panduan Baru dengan Struktur Kepala Tabel Lengkap
 st.markdown("""
 <div class="upload-box">
-    <h4>📅 Integrasi Data Massal via Excel Template</h4>
-    <p>Gunakan panel ini untuk mengunggah target permintaan (demand) secara sekaligus. Untuk memastikan integrasi berjalan lancar tanpa galat, file Excel wajib menggunakan struktur <b>Kepala Tabel (Header Column)</b> berikut:</p>
+    <h4>📅 Integrasi Data Operasional Massal via Excel Template</h4>
+    <p>Sekarang Anda dapat mengunggah target permintaan beserta batasan kapasitas dan parameter awal sekaligus. Pastikan file Excel Anda menggunakan struktur <b>Kepala Tabel (Header Column)</b> tepat seperti di bawah ini:</p>
     <table class="table-template">
         <tr>
-            <th>Periode (Kolom 1)</th>
-            <th>Demand (Kolom 2)</th>
+            <th>Periode</th>
+            <th>Demand</th>
+            <th>Kapasitas per Pekerja</th>
+            <th>Tenaga Kerja</th>
+            <th>Inventory Awal</th>
         </tr>
         <tr>
             <td>Bulan 1</td>
             <td>1200</td>
+            <td>70</td>
+            <td>20</td>
+            <td>200</td>
         </tr>
         <tr>
             <td>Bulan 2</td>
             <td>1300</td>
+            <td>70</td>
+            <td>20</td>
+            <td>0</td>
         </tr>
     </table>
-    <small style="color: #64748b; font-weight: 500;">*Sistem secara otomatis menyesuaikan nilai di sidebar dan melakukan kalkulasi ulang pada seluruh grafik model.</small>
+    <small style="color: #64748b; font-weight: 500;">*Catatan: Nilai 'Tenaga Kerja' dan 'Inventory Awal' pada baris Bulan 1 akan otomatis dijadikan sebagai baseline acuan awal sistem.</small>
 </div>
 """, unsafe_allow_html=True)
 
-# Generate File Excel Template secara Real-Time dalam Memory (Buffer)
-template_df = pd.DataFrame({
-    "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
-    "Demand": st.session_state.base_demand
-})
-
+# Generate File Excel Template secara Real-Time
 template_io = io.BytesIO()
 with pd.ExcelWriter(template_io, engine='openpyxl') as writer:
-    template_df.to_excel(writer, index=False, sheet_name='Demand_Template')
+    st.session_state.master_data.to_excel(writer, index=False, sheet_name='Planning_Template')
 template_io.seek(0)
 
-# Layout Interaktif Tombol Unduh & Unggah Excel
 col_dl, col_up = st.columns([1, 2])
-
 with col_dl:
     st.write("") 
     st.write("") 
     st.download_button(
-        label="📥 Unduh Template Excel Resmi",
+        label="📥 Unduh Template Excel Lengkap",
         data=template_io,
-        file_name="template_kepala_tabel_demand.xlsx",
+        file_name="template_master_operasional.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True
     )
@@ -243,151 +217,145 @@ with col_dl:
 with col_up:
     uploaded_file = st.file_uploader("Seret atau pilih file Excel Anda di sini:", type=["xlsx", "xls"], label_visibility="collapsed")
 
-# Logika Pemrosesan Excel dengan trigger pembaruan state dinamis
+# Logika Pemrosesan Ungguhan Excel untuk 5 Kolom
+required_cols = ["Periode", "Demand", "Kapasitas per Pekerja", "Tenaga Kerja", "Inventory Awal"]
 if uploaded_file is not None:
     try:
         excel_data = pd.read_excel(uploaded_file)
-        if "Periode" in excel_data.columns and "Demand" in excel_data.columns:
-            parsed_df = excel_data[["Periode", "Demand"]].head(num_periods).copy()
-            parsed_demand = pd.to_numeric(parsed_df["Demand"], errors='coerce').fillna(0).astype(int).tolist()
+        if all(col in excel_data.columns for col in required_cols):
+            parsed_df = excel_data[required_cols].head(num_periods).copy()
             
-            # Jika baris kurang dari 12, isi sisanya dengan angka 0
-            if len(parsed_demand) < num_periods:
-                parsed_demand += [0] * (num_periods - len(parsed_demand))
+            # Validasi dan konversi tipe data numerik
+            for col in required_cols[1:]:
+                parsed_df[col] = pd.to_numeric(parsed_df[col], errors='coerce').fillna(0).astype(int)
+            
+            # Jika baris kurang dari 12, lengkapi sisanya
+            if len(parsed_df) < num_periods:
+                extra_rows = pd.DataFrame({
+                    "Periode": [f"Bulan {i+1}" for i in range(len(parsed_df), num_periods)],
+                    "Demand": [0] * (num_periods - len(parsed_df)),
+                    "Kapasitas per Pekerja": [70] * (num_periods - len(parsed_df)),
+                    "Tenaga Kerja": [20] * (num_periods - len(parsed_df)),
+                    "Inventory Awal": [0] * (num_periods - len(parsed_df))
+                })
+                parsed_df = pd.concat([parsed_df, extra_rows], ignore_index=True)
                 
-            st.session_state.base_demand = parsed_demand[:num_periods]
-            st.session_state.editor_trigger += 1  # Mengubah key data_editor agar dipaksa render ulang
-            st.success("✅ File Excel berhasil diverifikasi! Seluruh data tabel utama dan sidebar otomatis diselaraskan.")
+            st.session_state.master_data = parsed_df
+            st.session_state.editor_trigger += 1
+            st.success("✅ Seluruh data master operasional dari Excel berhasil diselaraskan ke dalam sistem!")
         else:
-            st.error("❌ Format Kepala Tabel Salah! Pastikan kolom berlabel persis 'Periode' dan 'Demand'.")
+            st.error(f"❌ Format Kepala Tabel Salah! Pastikan kolom berlabel persis: {', '.join(required_cols)}")
     except Exception as e:
         st.error(f"❌ Gagal membaca file: {str(e)}")
 
 st.markdown("---")
 
 # ==============================================================================
-# 2. SIDEBAR - INPUT PARAMETER OPERASIONAL & BIAYA
+# TABEL EDITOR UTAMA (MAIN PANEL - LUXURIOUS & SPACIUS UX)
 # ==============================================================================
-st.sidebar.header("🛠️ Parameter Operasional")
+st.subheader("📝 Master Table Input Parameter Operasional")
+st.markdown("Anda bisa langsung mengubah angka Demand, Kapasitas, Tenaga Kerja Baseline, maupun Inventory Awal langsung pada tabel interaktif di bawah ini:")
 
-# Sinkronisasi dua arah yang aman antara unggahan Excel dan pengetikan manual di sidebar
-sidebar_input_df = pd.DataFrame({
-    "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
-    "Demand": st.session_state.base_demand
-})
-
-demand_df = st.sidebar.data_editor(
-    sidebar_input_df,
+active_master_df = st.data_editor(
+    st.session_state.master_data,
     hide_index=True,
-    key=f"demand_editor_{st.session_state.editor_trigger}"
+    key=f"master_editor_{st.session_state.editor_trigger}",
+    use_container_width=True
 )
-# Jadikan variabel base_demand sebagai acuan murni komputasi
-base_demand = demand_df["Demand"].tolist()
+# Simpan perubahan kembali ke session state agar persisten
+st.session_state.master_data = active_master_df
 
-# Kapasitas & Tenaga Kerja
-st.sidebar.subheader("Kapasitas & Tenaga Kerja")
-init_workforce = st.sidebar.number_input("Tenaga Kerja Awal (Pekerja)", value=20, min_value=0)
-worker_cap = st.sidebar.number_input("Kapasitas per Tenaga Kerja (Unit/Bulan)", value=70, min_value=1)
-init_inv = st.sidebar.number_input("Inventori Awal (Unit)", value=200, min_value=0)
-safety_stock = st.sidebar.number_input("Safety Stock (Unit)", value=100, min_value=0)
+# Ekstraksi Variabel Baseline dari baris pertama tabel editor
+init_inv = int(active_master_df.iloc[0]["Inventory Awal"])
+init_workforce = int(active_master_df.iloc[0]["Tenaga Kerja"])
 
-# Batasan Kapasitas Tambahan
-max_ot_cap = st.sidebar.number_input("Batas Maksimum Overtime (Unit/Bulan)", value=300, min_value=0)
-min_sub_cap = st.sidebar.number_input("Batas Minimum Subcontracting (Unit/Bulan)", value=50, min_value=0)
-max_sub_cap = st.sidebar.number_input("Batas Maksimum Subcontracting (Unit/Bulan)", value=500, min_value=0)
+st.markdown("---")
 
-if min_sub_cap > max_sub_cap:
-    st.sidebar.error("⚠️ Batas minimum subkontrak tidak boleh lebih besar dari batas maksimum!")
-
-# Struktur Biaya
-st.sidebar.header("💰 Struktur Biaya (IDR / Unit / Pekerja)")
-c_material = st.sidebar.number_input("Biaya Bahan Baku / Material Cost (/Unit)", value=150000, step=5000, min_value=0)
+# ==============================================================================
+# SIDEBAR - BIAYA & SKENARIO KETIDAKPASTIAN
+# ==============================================================================
+st.sidebar.header("💰 Struktur Biaya (IDR)")
+c_material = st.sidebar.number_input("Biaya Bahan Baku (/Unit)", value=150000, step=5000, min_value=0)
 c_regular = st.sidebar.number_input("Biaya Produksi Reguler (/Unit)", value=50000, step=1000, min_value=0)
 c_overtime = st.sidebar.number_input("Biaya Overtime (/Unit)", value=75000, step=1000, min_value=0)
 c_subcontract = st.sidebar.number_input("Biaya Subcontracting (/Unit)", value=90000, step=1000, min_value=0)
-c_inventory = st.sidebar.number_input("Biaya Simpan / Inventory (/Unit/Bulan)", value=10000, step=500, min_value=0)
-c_stockout = st.sidebar.number_input("Biaya Stockout / Shortage (/Unit/Bulan)", value=15000, step=500, min_value=0)
-c_hiring = st.sidebar.number_input("Biaya Rekrutmen / Hiring (/Pekerja)", value=2000000, step=50000, min_value=0)
-c_firing = st.sidebar.number_input("Biaya PHK / Firing (/Pekerja)", value=3500000, step=50000, min_value=0)
+c_inventory = st.sidebar.number_input("Biaya Simpan (/Unit/Bulan)", value=10000, step=500, min_value=0)
+c_stockout = st.sidebar.number_input("Biaya Shortage (/Unit/Bulan)", value=15000, step=500, min_value=0)
+c_hiring = st.sidebar.number_input("Biaya Rekrutmen (/Pekerja)", value=2000000, step=50000, min_value=0)
+c_firing = st.sidebar.number_input("Biaya PHK (/Pekerja)", value=3500000, step=50000, min_value=0)
 
-# Skenario Ketidakpastian (Robust Planning)
+st.sidebar.subheader("🛡️ Batasan Kapasitas Tambahan")
+safety_stock = st.sidebar.number_input("Safety Stock Target (Unit)", value=100, min_value=0)
+max_ot_cap = st.sidebar.number_input("Batas Maksimum Overtime (Unit/Bulan)", value=300, min_value=0)
+min_sub_cap = st.sidebar.number_input("Batas Minimum Subkontrak (Unit)", value=50, min_value=0)
+max_sub_cap = st.sidebar.number_input("Batas Maksimum Subkontrak (Unit)", value=500, min_value=0)
+
 st.sidebar.header("🎲 Skenario Ketidakpastian")
 p_normal = st.sidebar.slider("Probabilitas Normal", 0.0, 1.0, 0.6, step=0.05)
-p_optimistic = st.sidebar.slider("Probabilitas Optimis (Demand +25%)", 0.0, 1.0 - p_normal, 0.2, step=0.05)
+p_optimistic = st.sidebar.slider("Probabilitas Optimis (+25%)", 0.0, 1.0 - p_normal, 0.2, step=0.05)
 p_pessimistic = round(1.0 - p_normal - p_optimistic, 2)
-st.sidebar.text(f"Probabilitas Pesimis (Demand -25%): {p_pessimistic}")
+st.sidebar.text(f"Probabilitas Pesimis (-25%): {p_pessimistic}")
 
-if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
-    st.sidebar.error("⚠️ Total probabilitas skenario harus sama dengan 1.0")
-
-# Pilih Skenario Aktif untuk Tampilan Detail Utama
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. PERBAIKAN TOTAL LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT
+# 3. PERBAIKAN LOGIKA ENGINE PERHITUNGAN AGREGAT (MENDUKUNG KANVAS DINAMIS)
 # ==============================================================================
-def calculate_aggregate_planning(strategy, base_demand_list, demand_list):
+def calculate_aggregate_planning(strategy, master_df, scenario_demand_list):
     inv_prev = init_inv
     wf_prev = init_workforce
-    
     records = []
     
-    # Perbaikan Logika Kapasitas Level: Mempertimbangkan stok awal & target safety stock akhir horizontal
+    # Pre-kalkulasi untuk Strategi Level berdasarkan kapasitas per pekerja bulanan yang dinamis
     if strategy == "Level":
-        total_demand = sum(demand_list)
+        total_demand = sum(scenario_demand_list)
         total_production_needed = max(0, total_demand + safety_stock - init_inv)
-        avg_production_needed = total_production_needed / num_periods
-        constant_wf = int(np.ceil(avg_production_needed / worker_cap))
+        total_capacity_per_worker = master_df["Kapasitas per Pekerja"].sum()
+        constant_wf = int(np.ceil(total_production_needed / (total_capacity_per_worker / num_periods))) if total_capacity_per_worker > 0 else 0
     else:
         constant_wf = init_workforce
 
     for t in range(num_periods):
-        b_d = base_demand_list[t]
-        d_t = demand_list[t]
+        row = master_df.iloc[t]
+        b_d = int(row["Demand"])
+        d_t = scenario_demand_list[t]
+        worker_cap_t = int(row["Kapasitas per Pekerja"])
         net_demand = d_t + safety_stock
         
-        # 1. Perbaikan Alokasi Tenaga Kerja & Kapasitas Reguler
+        # 1. Logika Penyesuaian Tenaga Kerja & Produksi Reguler
         if strategy == "Chase":
-            # Perbaikan Logika Chase: Tenaga kerja direkrut berdasarkan kekurangan bersih bulan berjalan agar stok tidak menumpuk tanpa arah
             prod_needed = max(0, d_t + safety_stock - inv_prev)
-            wf_needed = int(np.ceil(prod_needed / worker_cap))
+            wf_needed = int(np.ceil(prod_needed / worker_cap_t)) if worker_cap_t > 0 else 0
             hiring = max(0, wf_needed - wf_prev)
             firing = max(0, wf_prev - wf_needed)
             wf_current = wf_needed
-            rt_prod = wf_current * worker_cap
+            rt_prod = wf_current * worker_cap_t
         elif strategy == "Level":
             wf_current = constant_wf
             hiring = max(0, wf_current - wf_prev) if t == 0 else 0
             firing = max(0, wf_prev - wf_current) if t == 0 else 0
-            rt_prod = wf_current * worker_cap
+            rt_prod = wf_current * worker_cap_t
         elif strategy == "Mixed":
-            wf_current = init_workforce
-            hiring = 0
-            firing = 0
-            rt_prod = wf_current * worker_cap
+            wf_current = int(row["Tenaga Kerja"]) if t > 0 else init_workforce
+            hiring = max(0, wf_current - wf_prev)
+            firing = max(0, wf_prev - wf_current)
+            rt_prod = wf_current * worker_cap_t
 
-        # 2. Perhitungan Overtime & Subcontracting dengan Kebijakan Defisit
+        # 2. Logika Alokasi Lembur & Subkontrak
         deficit = max(0, net_demand - rt_prod - inv_prev)
-        
         ot_prod = 0
         sub_prod = 0
         
         if strategy == "Mixed" and deficit > 0:
             ot_prod = min(max_ot_cap, deficit)
             deficit -= ot_prod
-            
             if deficit > 0:
                 sub_needed = max(min_sub_cap, deficit)
                 sub_prod = min(max_sub_cap, sub_needed)
                 deficit = max(0, deficit - sub_prod)
-                
-        elif strategy in ["Chase", "Level"] and deficit > 0:
-            pass
 
-        # 3. Perbaikan Logika Balance Sheet: Inventory vs Stockout yang Akurat
-        # Stok akhir adalah sisa pasokan setelah dikurangi demand riil, bukan demand + safety stock!
+        # 3. Neraca Inventori Akhir vs Stockout Riil
         total_supply = inv_prev + rt_prod + ot_prod + sub_prod
-        
         if total_supply >= d_t:
             inv_end = total_supply - d_t
             stockout = 0
@@ -395,7 +363,7 @@ def calculate_aggregate_planning(strategy, base_demand_list, demand_list):
             inv_end = 0
             stockout = d_t - total_supply
             
-        # 4. Kalkulasi Struktur Biaya Detail per Periode
+        # 4. Penghitungan Cost Matrix Komprehensif
         cost_mat = (rt_prod + ot_prod) * c_material 
         cost_rep = rt_prod * c_regular
         cost_labor = wf_current * 3000000
@@ -408,9 +376,10 @@ def calculate_aggregate_planning(strategy, base_demand_list, demand_list):
         total_cost = cost_mat + cost_rep + cost_hire + cost_fire + cost_hold + cost_ot + cost_sub + cost_short
 
         records.append({
-            "Periode": f"Bulan {t+1}",
-            "Base Demand": b_d,        # Kolom baru: Membaca input murni Anda agar terlihat di master table
-            "Demand": d_t,             # Representasi demand skenario aktif
+            "Periode": row["Periode"],
+            "Base Demand": b_d,
+            "Demand": d_t,
+            "Kapasitas/Pekerja": worker_cap_t,
             "Net Demand": net_demand,
             "Workforce": wf_current,
             "Hiring": hiring,
@@ -438,29 +407,29 @@ def calculate_aggregate_planning(strategy, base_demand_list, demand_list):
         
     return pd.DataFrame(records)
 
-# Penyesuaian Multiplier Skenario Demand Uncertainty
+# Integrasi Skenario Multiplier
+base_demands = active_master_df["Demand"].tolist()
 demand_scenarios = {
-    "Normal": base_demand,
-    "Optimis": [int(d * 1.25) for d in base_demand],
-    "Pesimis": [int(d * 0.75) for d in base_demand]
+    "Normal": base_demands,
+    "Optimis": [int(d * 1.25) for d in base_demands],
+    "Pesimis": [int(d * 0.75) for d in base_demands]
 }
 
-# Generate Data untuk Seluruh Kombinasi Strategi & Skenario
+# Pemrosesan Seluruh Kombinasi
 results = {}
 for strat in ["Chase", "Level", "Mixed"]:
     results[strat] = {}
     for scen, d_list in demand_scenarios.items():
-        results[strat][scen] = calculate_aggregate_planning(strat, base_demand, d_list)
+        results[strat][scen] = calculate_aggregate_planning(strat, active_master_df, d_list)
 
 # ==============================================================================
-# 4. EVALUASI METRIK KPI UTAMA VIA EXPECTED VALUE
+# 4. EVALUASI KPI & EXPECTED VALUE STRATEGIS
 # ==============================================================================
 summary_metrics = []
 for strat in ["Chase", "Level", "Mixed"]:
     c_norm = results[strat]["Normal"]["Total Cost"].sum()
     c_opt = results[strat]["Optimis"]["Total Cost"].sum()
     c_pess = results[strat]["Pesimis"]["Total Cost"].sum()
-    
     expected_cost = (c_norm * p_normal) + (c_opt * p_optimistic) + (c_pess * p_pessimistic)
     
     df_active = results[strat][selected_scenario]
@@ -468,30 +437,22 @@ for strat in ["Chase", "Level", "Mixed"]:
     total_shortage = df_active["Stockout"].sum()
     
     service_level = max(0.0, ((total_demand - total_shortage) / total_demand) * 100) if total_demand > 0 else 100
-    
     actual_production = df_active["RT Production"].sum() + df_active["OT Production"].sum()
-    max_capacity = (df_active["Workforce"] * worker_cap).sum() + (max_ot_cap * num_periods)
+    max_capacity = (df_active["Workforce"] * df_active["Kapasitas/Pekerja"]).sum() + (max_ot_cap * num_periods)
     capacity_util = (actual_production / max_capacity) * 100 if max_capacity > 0 else 0
-    wf_total_cap = (df_active["Workforce"] * worker_cap).sum()
-    wf_util = (df_active["RT Production"].sum() / wf_total_cap) * 100 if wf_total_cap > 0 else 0
     
     summary_metrics.append({
         "Strategi": strat,
         "Total Cost (Active)": df_active["Total Cost"].sum(),
         "Expected Cost": expected_cost,
-        "Total Inventory": df_active["Inventory"].sum(),
-        "Total Stockout": df_active["Stockout"].sum(),
-        "Total Overtime": df_active["OT Production"].sum(),
-        "Total Subcontracting": df_active["Subcontracting"].sum(),
         "Service Level": service_level,
-        "Workforce Utilization": wf_util,
         "Capacity Utilization": capacity_util
     })
 
 summary_df = pd.DataFrame(summary_metrics)
 
 # ==============================================================================
-# 5. LAYOUT UTAMA: TABS INTERAKTIF
+# 5. LAYOUT TABS INTERAKTIF
 # ==============================================================================
 tab1, tab2, tab3 = st.tabs([
     "📈 Ringkasan Eksekutif & Rekomendasi", 
@@ -506,18 +467,15 @@ def apply_forced_light_theme(fig):
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color="#0f172a", family="'Inter', sans-serif"),
         title_font=dict(color="#0f172a", size=14, family="'Inter', sans-serif"),
-        xaxis=dict(gridcolor="#f1f5f9", tickfont=dict(color="#475569"), title_font=dict(color="#0f172a")),
-        yaxis=dict(gridcolor="#f1f5f9", tickfont=dict(color="#475569"), title_font=dict(color="#0f172a")),
+        xaxis=dict(gridcolor="#f1f5f9", tickfont=dict(color="#475569")),
+        yaxis=dict(gridcolor="#f1f5f9", tickfont=dict(color="#475569")),
         legend=dict(font=dict(color="#475569"))
     )
     return fig
 
-# ------------------------------------------------------------------------------
-# TAB 1: EXECUTIVE SUMMARY & STRATEGIC RECOMMENDATION
-# ------------------------------------------------------------------------------
+# --- TAB 1 ---
 with tab1:
     st.subheader(f"Key Performance Indicator (KPI) - Skenario: {selected_scenario}")
-    
     cols = st.columns(3)
     for idx, row in summary_df.iterrows():
         with cols[idx]:
@@ -532,148 +490,49 @@ with tab1:
             """, unsafe_allow_html=True)
             
     st.markdown("---")
-    
     c1, c2 = st.columns(2)
     with c1:
-        fig_cost = px.bar(summary_df, x="Strategi", y="Total Cost (Active)", 
-                          title=f"Perbandingan Total Biaya Operasional Horison 12 Bulan ({selected_scenario})",
-                          color="Strategi", text_auto=',.0f', color_discrete_sequence=px.colors.qualitative.Safe)
-        fig_cost = apply_forced_light_theme(fig_cost)
-        st.plotly_chart(fig_cost, use_container_width=True)
+        fig_cost = px.bar(summary_df, x="Strategi", y="Total Cost (Active)", title="Perbandingan Total Biaya Operasional", color="Strategi", text_auto=',.0f', color_discrete_sequence=px.colors.qualitative.Safe)
+        st.plotly_chart(apply_forced_light_theme(fig_cost), use_container_width=True)
     with c2:
-        fig_sl = px.bar(summary_df, x="Strategi", y="Service Level", 
-                        title="Tingkat Layanan Pemenuhan Permintaan (Service Level %)",
-                        color="Strategi", text_auto='.2f', range_y=[0, 105], color_discrete_sequence=px.colors.qualitative.Safe)
-        fig_sl = apply_forced_light_theme(fig_sl)
-        st.plotly_chart(fig_sl, use_container_width=True)
+        fig_sl = px.bar(summary_df, x="Strategi", y="Service Level", title="Service Level (%)", color="Strategi", text_auto='.2f', range_y=[0, 105], color_discrete_sequence=px.colors.qualitative.Safe)
+        st.plotly_chart(apply_forced_light_theme(fig_sl), use_container_width=True)
 
-    st.markdown("### 🤖 Rekomendasi Strategi Optimal")
-    best_cost_strat = summary_df.loc[summary_df["Expected Cost"].idxmin()]["Strategi"]
-    best_sl_strat = summary_df.loc[summary_df["Service Level"].idxmax()]["Strategi"]
-    best_util_strat = summary_df.loc[summary_df["Capacity Utilization"].idxmax()]["Strategi"]
-    
-    st.markdown(f"""
-    <div class="recommendation-box">
-        <h4>🎯 Keputusan Strategis Berdasarkan Aturan Optimasi Terpadu:</h4>
-        <ul>
-            <li><b>Efisiensi Biaya Terbaik (Robust):</b> Strategi <b>{best_cost_strat}</b> memberikan nilai ekonomis paling tangguh (Expected Cost terendah lintas skenario).</li>
-            <li><b>Keterandalan Layanan (Service Level):</b> Strategi <b>{best_sl_strat}</b> paling optimal meminimalisir risiko stockout di pasar.</li>
-            <li><b>Efisiensi Fasilitas (Utilisasi Kapasitas):</b> Strategi <b>{best_util_strat}</b> mencatatkan penggunaan infrastruktur produksi paling produktif.</li>
-        </ul>
-        <p><b>Rekomendasi Final:</b> Disarankan menggunakan pendekatan <b>{best_cost_strat} Strategy</b> untuk mengamankan struktur finansial perusahaan dari fluktuasi ketidakpastian pasar jangka panjang.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# ------------------------------------------------------------------------------
-# TAB 2: DETAILED STRATEGY DEEP-DIVE
-# ------------------------------------------------------------------------------
+# --- TAB 2 ---
 with tab2:
     selected_strategy = st.radio("Pilih Strategi untuk Analisis Mendalam:", ["Chase", "Level", "Mixed"], horizontal=True)
     df_selected = results[selected_strategy][selected_scenario]
     
-    st.subheader(f"📋 Master Table Aggregate Production Planning: {selected_strategy} ({selected_scenario})")
-    # Penambahan kolom "Base Demand" agar user tahu persis data dasar yang diinput vs penyesuaian skenario demand
-    master_display = df_selected[["Periode", "Base Demand", "Demand", "Net Demand", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]]
+    st.subheader(f"📋 Master Table Perencanaan Terpilih: {selected_strategy} ({selected_scenario})")
+    master_display = df_selected[["Periode", "Base Demand", "Demand", "Kapasitas/Pekerja", "Workforce", "Hiring", "Firing", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]]
     st.dataframe(master_display.style.format(precision=0), use_container_width=True)
     
-    if selected_strategy == "Chase":
-        st.subheader("👨‍🏭 Workforce & Capacity Adjustment Sheet (Chase Focus)")
-        st.dataframe(df_selected[["Periode", "Workforce", "Hiring", "Firing", "RT Production"]].style.format(precision=0), use_container_width=True)
-        
-    elif selected_strategy == "Level":
-        st.subheader("📦 Inventory Buffer & Capacity Efficiency Sheet (Level Focus)")
-        df_level_spec = df_selected[["Periode", "Inventory", "Stockout", "RT Production"]].copy()
-        df_level_spec["Capacity Efficiency (%)"] = np.where((df_selected["Workforce"] * worker_cap) > 0, (df_level_spec["RT Production"] / (df_selected["Workforce"] * worker_cap)) * 100, 0)
-        st.dataframe(df_level_spec.style.format(precision=1), use_container_width=True)
-        
-    elif selected_strategy == "Mixed":
-        st.subheader("🔄 Sourcing Optimization & Make-or-Buy Analysis (Mixed Focus)")
-        mob_df = df_selected[["Periode", "RT Production", "OT Production", "Subcontracting"]].copy()
-        total_p = mob_df["RT Production"] + mob_df["OT Production"] + mob_df["Subcontracting"]
-        mob_df["Internal Content (%)"] = np.where(total_p > 0, ((mob_df["RT Production"] + mob_df["OT Production"]) / total_p) * 100, 0)
-        st.dataframe(mob_df.style.format(precision=1), use_container_width=True)
-        
-        st.subheader("🪵 Raw Material Requirements Planning (BOM Explode Proxy)")
-        raw_mat_df = pd.DataFrame({
-            "Periode": df_selected["Periode"],
-            "Incoming Material (Unit)": (df_selected["RT Production"] + df_selected["OT Production"]) * 1.05,
-            "Usage Material (Unit)": (df_selected["RT Production"] + df_selected["OT Production"]),
-            "Ending Inventory Material": np.maximum(0, 100 + ((df_selected["RT Production"] + df_selected["OT Production"]) * 0.05)),
-            "Material Shortage": 0
-        })
-        st.dataframe(raw_mat_df.style.format(precision=0), use_container_width=True)
-
-    st.subheader("💸 Analisis Finansial & Struktur Biaya Berjalan")
+    st.subheader("💸 Detail Komponen Finansial")
     cost_cols = ["Periode", "Material Cost", "Production Cost", "Labor Cost", "Hiring Cost", "Firing Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost", "Total Cost"]
     st.dataframe(df_selected[cost_cols].style.format(precision=0), use_container_width=True)
-    
-    st.markdown("### 📊 Visualisasi Performa Berkala (12 Periode)")
+
+    st.markdown("### 📊 Tren Grafis Operasional")
     v1, v2 = st.columns(2)
     with v1:
         fig_dp = go.Figure()
-        fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Real Skenario", line=dict(color='#ef4444', width=2, dash='dash')))
-        fig_dp.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["RT Production"] + df_selected["OT Production"] + df_selected["Subcontracting"], name="Total Produksi", marker_color='#3b82f6'))
-        fig_dp.update_layout(title="Perbandingan Tren Permintaan vs Realisasi Pasokan (12 Bulan)", barmode='group')
-        fig_dp = apply_forced_light_theme(fig_dp)
-        st.plotly_chart(fig_dp, use_container_width=True)
+        fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Riil", line=dict(color='#ef4444', width=2, dash='dash')))
+        fig_dp.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["RT Production"] + df_selected["OT Production"] + df_selected["Subcontracting"], name="Total Realisasi Produksi", marker_color='#3b82f6'))
+        fig_dp.update_layout(barmode='group')
+        st.plotly_chart(apply_forced_light_theme(fig_dp), use_container_width=True)
     with v2:
-        fig_cb = px.bar(df_selected, x="Periode", y=["Material Cost", "Production Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost"],
-                        title="Dinamika Komponen Biaya per Periode", color_discrete_sequence=px.colors.qualitative.Safe)
-        fig_cb = apply_forced_light_theme(fig_cb)
-        st.plotly_chart(fig_cb, use_container_width=True)
+        fig_cb = px.bar(df_selected, x="Periode", y=["Material Cost", "Production Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost"], title="Struktur Pembebanan Biaya", color_discrete_sequence=px.colors.qualitative.Safe)
+        st.plotly_chart(apply_forced_light_theme(fig_cb), use_container_width=True)
 
-    v3, v4 = st.columns(2)
-    with v3:
-        fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, line_shape="linear")
-        fig_inv.update_traces(line=dict(color='#10b981'))
-        fig_inv = apply_forced_light_theme(fig_inv)
-        st.plotly_chart(fig_inv, use_container_width=True)
-    with v4:
-        fig_os = go.Figure()
-        fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["OT Production"], name="Overtime Vol", marker_color='#f59e0b'))
-        fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["Subcontracting"], name="Subcontract Vol", marker_color='#8b5cf6'))
-        fig_os.update_layout(title="Alokasi Kapasitas Tambahan: Lembur vs Pihak Ketiga", barmode='stack')
-        fig_os = apply_forced_light_theme(fig_os)
-        st.plotly_chart(fig_os, use_container_width=True)
-
-# ------------------------------------------------------------------------------
-# TAB 3: ROBUST SCENARIO & RISK ANALYSIS
-# ------------------------------------------------------------------------------
+# --- TAB 3 ---
 with tab3:
-    st.subheader("🎲 Matriks Analisis Risiko & Robust Planning")
-    st.markdown("Tabel di bawah menyajikan komparasi performa finansial di seluruh spektrum kemungkinan permintaan untuk menguji ketangguhan model.")
-    
+    st.subheader("🎲 Matriks Analisis Ketangguhan Skenario (Robust Planning)")
     robust_records = []
     for strat in ["Chase", "Level", "Mixed"]:
-        c_norm = results[strat]["Normal"]["Total Cost"].sum()
-        c_opt = results[strat]["Optimis"]["Total Cost"].sum()
-        c_pess = results[strat]["Pesimis"]["Total Cost"].sum()
-        exp_c = (c_norm * p_normal) + (c_opt * p_optimistic) + (c_pess * p_pessimistic)
-        
         robust_records.append({
             "Strategi": strat,
-            "Skenario Pesimis (Cost)": c_pess,
-            "Skenario Normal (Cost)": c_norm,
-            "Skenario Optimis (Cost)": c_opt,
-            "Expected Robust Cost": exp_c
+            "Skenario Pesimis (Cost)": results[strat]["Pesimis"]["Total Cost"].sum(),
+            "Skenario Normal (Cost)": results[strat]["Normal"]["Total Cost"].sum(),
+            "Skenario Optimis (Cost)": results[strat]["Optimis"]["Total Cost"].sum(),
+            "Expected Robust Cost": (results[strat]["Normal"]["Total Cost"].sum() * p_normal) + (results[strat]["Optimis"]["Total Cost"].sum() * p_optimistic) + (results[strat]["Pesimis"]["Total Cost"].sum() * p_pessimistic)
         })
-        
-    robust_df = pd.DataFrame(robust_records)
-    st.dataframe(robust_df.style.format({
-        "Skenario Pesimis (Cost)": "IDR {:,.0f}",
-        "Skenario Normal (Cost)": "IDR {:,.0f}",
-        "Skenario Optimis (Cost)": "IDR {:,.0f}",
-        "Expected Robust Cost": "IDR {:,.0f}"
-    }), use_container_width=True)
-    
-    fig_robust = go.Figure()
-    for strat in ["Chase", "Level", "Mixed"]:
-        row = robust_df[robust_df["Strategi"] == strat].iloc[0]
-        fig_robust.add_trace(go.Scatter(
-            x=["Pesimis", "Normal", "Optimis"], 
-            y=[row["Skenario Pesimis (Cost)"], row["Skenario Normal (Cost)"], row["Skenario Optimis (Cost)"]],
-            mode='lines+markers', name=f"Profil Risiko {strat}"
-        ))
-    fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", yaxis_title="Total Biaya (IDR)")
-    fig_robust = apply_forced_light_theme(fig_robust)
-    st.plotly_chart(fig_robust, use_container_width=True)
+    st.dataframe(pd.DataFrame(robust_records).style.format({c: "IDR {:,.0f}" for c in ["Skenario Pesimis (Cost)", "Skenario Normal (Cost)", "Skenario Optimis (Cost)", "Expected Robust Cost"]}), use_container_width=True)
