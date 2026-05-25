@@ -13,7 +13,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Injeksi CSS Radikal tingkat lanjut untuk menghancurkan paksaan Dark Mode dari browser
+# Injeksi CSS Radikal untuk memaksa emulasi light mode secara mutlak di level mesin Streamlit
 st.markdown("""
 <style>
     /* Mengubah paksa seluruh variabel warna dasar internal Streamlit */
@@ -25,7 +25,7 @@ st.markdown("""
         color: #000000 !important;
     }
 
-    /* 1. Memaksa Background Aplikasi Utama & Seluruh Container Menjadi Putih Bersih */
+    /* 1. Memaksa Background Aplikasi Utama Menjadi Putih Bersih */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMainBlockContainer"] {
         background-color: #ffffff !important;
         color: #000000 !important;
@@ -53,7 +53,7 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* 4. PERBAIKAN SIDEBAR & INPUT: Paksa Box Input Angka, Textbox & Selectbox Menjadi Putih Bersih */
+    /* 4. Paksa Box Input Angka, Textbox & Selectbox Menjadi Putih Bersih */
     div[data-baseweb="input"], 
     div[data-baseweb="select"], 
     .stNumberInput input, 
@@ -74,7 +74,7 @@ st.markdown("""
         -webkit-text-fill-color: #000000 !important;
     }
 
-    /* 5. PERBAIKAN TOMBOL (+ / -) SIDEBAR: Mengubah Latar Gelap Menjadi Soft Pink Pastel */
+    /* 5. Paksa Tombol Pilihan Plus (+) dan Minus (-) Menjadi Cerah */
     button[title="Increment"], 
     button[title="Decrement"], 
     [data-testid="stNumberInputStepDown"], 
@@ -97,7 +97,7 @@ st.markdown("""
         color: #000000 !important;
     }
 
-    /* 7. Garis Pembatas Horizontal */
+    /* 7. Garis Pembatas Horizontal Bertema Pink */
     hr {
         border: 0 !important;
         height: 2px !important;
@@ -210,7 +210,6 @@ st.sidebar.subheader("Permintaan (Demand) per Periode")
 default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
 demand_init_df = pd.DataFrame({"Periode": [f"Bulan {i+1}" for i in range(num_periods)], "Demand": default_demand})
 
-# Memaksa warna data editor di samping menggunakan engine style pandas light
 demand_df = st.sidebar.data_editor(
     demand_init_df,
     hide_index=True
@@ -447,7 +446,6 @@ with tab1:
                           color="Strategi", text_auto=',.0f',
                           color_discrete_sequence=["#ffccd5", "#f48fb1", "#c2185b"])
         
-        # PERBAIKAN GRAFIK PLOTLY SECARA MUTLAK (ANTI GAGAL SANGGUP FORCE LIGHT MODE)
         fig_cost.update_layout(
             template="plotly_white",
             plot_bgcolor='#ffffff', 
@@ -465,7 +463,6 @@ with tab1:
                         color="Strategi", text_auto='.2f', range_y=[0, 105],
                         color_discrete_sequence=["#ffccd5", "#f48fb1", "#c2185b"])
         
-        # PERBAIKAN GRAFIK PLOTLY SECARA MUTLAK (ANTI GAGAL SANGGUP FORCE LIGHT MODE)
         fig_sl.update_layout(
             template="plotly_white",
             plot_bgcolor='#ffffff', 
@@ -502,6 +499,7 @@ with tab2:
     df_selected = results[selected_strategy][selected_scenario]
     
     st.subheader(f"📋 Master Table Aggregate Production Planning: {selected_strategy} ({selected_scenario})")
+    master_display = df_selected[["Periode", "Demand", "Net Demand", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]]
     st.dataframe(style_table_light(master_display, 0), use_container_width=True)
     
     if selected_strategy == "Chase":
