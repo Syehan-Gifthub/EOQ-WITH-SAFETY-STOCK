@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+import io  # Penambahan modul input/output untuk pengelolaan file Excel instan
 
 # ==============================================================================
 # 1. KONFIGURASI HALAMAN & STYLE DASHBOARD (MINIMALIS, PROFESIONAL & GRADASI)
@@ -150,6 +151,28 @@ st.markdown("""
         border-bottom: 2px solid #3b82f6 !important;
         font-weight: 600 !important;
     }
+
+    /* 7. Box Panduan Upload Excel Premium (BARU) */
+    .upload-box {
+        background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+        border: 1px solid #cbd5e1;
+        border-radius: 10px;
+        padding: 22px;
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .upload-box::before {
+        content: "";
+        position: absolute;
+        top: 0; left: 0; bottom: 0;
+        width: 5px;
+        background: linear-gradient(180deg, #3b82f6 0%, #6366f1 100%);
+    }
+    .upload-box h4 { color: #0f172a !important; font-weight: 700; margin-top: 0; margin-bottom: 8px;}
+    .upload-box p { color: #334155 !important; font-size: 14px; margin-bottom: 12px; line-height: 1.5; }
+    .table-template { width: 100%; border-collapse: collapse; margin: 10px 0; background-color: #ffffff; }
+    .table-template th { background-color: #e2e8f0; color: #0f172a; padding: 6px 12px; border: 1px solid #cbd5e1; font-size: 13px; font-weight: 600; text-align: left; }
+    .table-template td { padding: 6px 12px; border: 1px solid #cbd5e1; color: #475569; font-size: 13px; font-family: monospace; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -158,17 +181,100 @@ st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan 
 st.markdown("---")
 
 # ==============================================================================
+# INTEGRASI TEMPLATE & KOTAK UPLOAD EXCEL OTOMATIS (BARU)
+# ==============================================================================
+num_periods = 12
+default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
+
+# Inisialisasi basis data demand ke dalam Session State agar tersinkronisasi lintas komponen
+if "df_demand_state" not in st.session_state:
+    st.session_state.df_demand_state = pd.DataFrame({
+        "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
+        "Demand": default_demand
+    })
+
+# Desain Banner Instruksi Upload yang Menarik & Informatif
+st.markdown("""
+<div class="upload-box">
+    <h4>📅 Integrasi Data Massal via Excel Template</h4>
+    <p>Gunakan panel ini untuk mengunggah target permintaan (demand) secara sekaligus. Untuk memastikan integrasi berjalan lancar tanpa galat, file Excel wajib menggunakan struktur <b>Kepala Tabel (Header Column)</b> berikut:</p>
+    <table class="table-template">
+        <tr>
+            <th>Periode (Kolom 1)</th>
+            <th>Demand (Kolom 2)</th>
+        </tr>
+        <tr>
+            <td>Bulan 1</td>
+            <td>1200</td>
+        </tr>
+        <tr>
+            <td>Bulan 2</td>
+            <td>1300</td>
+        </tr>
+    </table>
+    <small style="color: #64748b; font-weight: 500;">*Sistem secara otomatis menyesuaikan nilai di sidebar dan melakukan kalkulasi ulang pada seluruh grafik model.</small>
+</div>
+""", unsafe_allow_html=True)
+
+# Generate File Excel Template secara Real-Time dalam Memory (Buffer)
+template_io = io.BytesIO()
+with pd.ExcelWriter(template_io, engine='openpyxl') as writer:
+    st.session_state.df_demand_state.to_excel(writer, index=False, sheet_name='Demand_Template')
+template_io.seek(0)
+
+# Layout Interaktif Tombol Unduh & Unggah Excel
+col_dl, col_up = st.columns([1, 2])
+
+with col_dl:
+    st.write("") # Spacer keselarasan vertikal
+    st.write("") 
+    st.download_button(
+        label="📥 Unduh Template Excel Resmi",
+        data=template_io,
+        file_name="template_kepala_tabel_demand.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True
+    )
+
+with col_up:
+    uploaded_file = st.file_uploader("Seret atau pilih file Excel Anda di sini:", type=["xlsx", "xls"], label_visibility="collapsed")
+
+# Logika Pemrosesan Otomatis jika User mengupload file Excel
+if uploaded_file is not None:
+    try:
+        excel_data = pd.read_excel(uploaded_file)
+        # Validasi struktur kepala tabel agar sesuai prasyarat mesin hitung
+        if "Periode" in excel_data.columns and "Demand" in excel_data.columns:
+            # Ambil 12 periode teratas & konversi nilai ke tipe numerik integer beralur aman
+            parsed_df = excel_data[["Periode", "Demand"]].head(num_periods).copy()
+            parsed_df["Demand"] = pd.to_numeric(parsed_df["Demand"], errors='coerce').fillna(0).astype(int)
+            
+            # Perbarui state global aplikasi
+            st.session_state.df_demand_state = parsed_df
+            
+            # Hancurkan session state internal widget editor lama agar dipaksa memuat data baru dari Excel
+            if "demand_editor_key" in st.session_state:
+                del st.session_state["demand_editor_key"]
+                
+            st.success("✅ File Excel berhasil diverifikasi! Seluruh data tabel utama dan sidebar otomatis diselaraskan.")
+        else:
+            st.error("❌ Format Kepala Tabel Salah! Pastikan kolom berlabel persis 'Periode' dan 'Demand'.")
+    except Exception as e:
+        st.error(f"❌ Gagal membaca file: {str(e)}")
+
+st.markdown("---")
+
+# ==============================================================================
 # 2. SIDEBAR - INPUT PARAMETER OPERASIONAL & BIAYA
 # ==============================================================================
 st.sidebar.header("🛠️ Parameter Operasional")
-num_periods = 12
 
-# Input Demand Base via UI Dataframe
+# Input Demand Base via UI Dataframe (Sekarang Otomatis ter-update jika mengunggah Excel)
 st.sidebar.subheader("Permintaan (Demand) per Periode")
-default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
 demand_df = st.sidebar.data_editor(
-    pd.DataFrame({"Periode": [f"Bulan {i+1}" for i in range(num_periods)], "Demand": default_demand}),
-    hide_index=True
+    st.session_state.df_demand_state,
+    hide_index=True,
+    key="demand_editor_key"
 )
 base_demand = demand_df["Demand"].tolist()
 
