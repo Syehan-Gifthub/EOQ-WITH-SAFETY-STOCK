@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # ==============================================================================
-# 1. KONFIGURASI HALAMAN & TEMA GLOBAL (MEMAKSA LIGHT MODE VIA CONFIG)
+# 1. KONFIGURASI HALAMAN & STYLE DASHBOARD (WARNA TEKS DIUBAH KE HITAM)
 # ==============================================================================
 st.set_page_config(
     page_title="Interactive Aggregate Planning Dashboard",
@@ -13,102 +13,34 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Menyuntikkan konfigurasi tema bawaan Streamlit secara paksa agar Full Light Mode
-# Ini akan menyelesaikan masalah teks putih yang hilang di latar belakang putih.
+# Custom CSS untuk memastikan seluruh teks di dalam card dan rekomendasi berwarna hitam
 st.markdown("""
 <style>
-    /* Mengunci skema warna global browser ke light mode */
-    :root {
-        color-scheme: light !important;
-    }
-    
-    /* --- Latar Belakang & Teks Utama --- */
-    .stApp {
-        background-color: #ffffff !important;
-        color: #111111 !important;
-    }
-    
     .block-container { padding-top: 2rem; padding-bottom: 2rem; }
-    
-    /* --- Perbaikan Sidebar (Full Putih & Teks Hitam Pekat) --- */
-    section[data-testid="stSidebar"] {
-        background-color: #ffffff !important;
-        border-right: 3px solid #ff69b4 !important; /* Garis pembatas pink tebal */
-    }
-    section[data-testid="stSidebar"] *, 
-    section[data-testid="stSidebar"] label, 
-    section[data-testid="stSidebar"] h2, 
-    section[data-testid="stSidebar"] p {
-        color: #111111 !important; /* Memaksa semua teks di sidebar menjadi hitam */
-    }
-
-    /* --- Perbaikan Input Box & Tombol Plus Minus (+ / -) --- */
-    div[data-baseweb="input"] {
-        background-color: #ffffff !important;
-        border: 2px solid #ff69b4 !important;
-        border-radius: 6px !important;
-    }
-    div[data-baseweb="input"] input {
-        color: #111111 !important;
-        background-color: #ffffff !important;
-    }
-    
-    /* Tombol tambah kurang pada input angka */
-    button[title="Increment"], button[title="Decrement"] {
-        background-color: #ffffff !important;
-        color: #ff1493 !important; /* Warna pink kontras untuk tombol */
-        border: 1px solid #ff69b4 !important;
-    }
-    button[title="Increment"]:hover, button[title="Decrement"]:hover {
-        background-color: #ffe4e1 !important;
-    }
-
-    /* --- Perbaikan Total Tabel / Dataframe (Anti-Hitam) --- */
-    div[data-testid="stDataFrame"], div[data-testid="stDataEditor"], div[data-testid="stTable"] {
-        background-color: #ffffff !important;
-        border: 2px solid #ff69b4 !important;
-        border-radius: 8px !important;
-    }
-    /* Memaksa isi sel di dalam tabel berlatar putih pekat dengan teks hitam */
-    div[data-testid="stDataFrame"] *, div[data-testid="stDataEditor"] * {
-        background-color: #ffffff !important;
-        color: #111111 !important;
-    }
-    /* Mengubah warna border antar baris/kolom tabel menjadi pink tipis */
-    div[data-testid="stDataFrame"] [role="gridcell"], 
-    div[data-testid="stDataEditor"] [role="gridcell"] {
-        border-color: #ffe4e1 !important;
-    }
-
-    /* --- Custom Card Metrik KPI & Rekomendasi --- */
     .kpi-card {
-        background-color: #ffffff !important;
+        background-color: #f8f9fa;
         border-radius: 8px;
         padding: 20px;
-        box-shadow: 0 4px 12px rgba(255, 105, 180, 0.25);
-        border: 1px solid #ffe4e1;
-        border-left: 7px solid #ff1493; /* Garis pink tegas di sisi kiri */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-left: 5px solid #007bff;
         margin-bottom: 15px;
-        color: #111111 !important;
+        color: #111111; /* Memaksa warna teks utama menjadi hitam */
     }
-    .kpi-title { font-size: 14px; color: #ff1493; font-weight: bold; text-transform: uppercase; }
+    .kpi-title { font-size: 14px; color: #495057; font-weight: bold; text-transform: uppercase; }
     .kpi-value { font-size: 24px; color: #000000; font-weight: bold; margin-top: 5px; }
+    .kpi-card small { color: #212529; font-weight: 500; } /* Teks kecil KPI menjadi hitam */
     
     .recommendation-box {
-        background-color: #fffafb; /* Warna latar pink putih pastel */
+        background-color: #e3f2fd;
         border-radius: 8px;
         padding: 25px;
-        border: 1px solid #ffe4e1;
-        border-left: 7px solid #ff1493;
+        border-left: 6px solid #0d47a1;
         margin-top: 20px;
-        color: #111111 !important;
+        color: #111111; /* Memaksa seluruh teks rekomendasi menjadi hitam */
     }
-    .recommendation-box h4 { color: #d81b60; font-weight: bold; }
-
-    /* Garis pemisah horizontal (hr) */
-    hr {
-        border-top: 2px solid #ffe4e1 !important;
-    }
+    .recommendation-box h4 { color: #0d47a1; font-weight: bold; }
+    .recommendation-box li { color: #111111; }
+    .recommendation-box p { color: #111111; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -117,7 +49,7 @@ st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan 
 st.markdown("---")
 
 # ==============================================================================
-# 2. SIDEBAR - INPUT PARAMETER OPERASIONAL & BIAYA (LOGIKA TETAP UTUH)
+# 2. SIDEBAR - INPUT PARAMETER OPERASIONAL & BIAYA
 # ==============================================================================
 st.sidebar.header("🛠️ Parameter Operasional")
 num_periods = 12
@@ -171,7 +103,7 @@ if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (TETAP UTUH)
+# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT
 # ==============================================================================
 def calculate_aggregate_planning(strategy, demand_list):
     inv_prev = init_inv
@@ -190,6 +122,7 @@ def calculate_aggregate_planning(strategy, demand_list):
         d_t = demand_list[t]
         net_demand = d_t + safety_stock
         
+        # 1. Workforce & Regular Time Production Planning Based on Strategy
         if strategy == "Chase":
             wf_needed = int(np.ceil(net_demand / worker_cap))
             hiring = max(0, wf_needed - wf_prev)
@@ -207,6 +140,7 @@ def calculate_aggregate_planning(strategy, demand_list):
             firing = 0
             rt_prod = wf_current * worker_cap
 
+        # 2. Perhitungan Overtime & Subcontracting dengan Kebijakan Minimum
         deficit = max(0, net_demand - rt_prod - inv_prev)
         
         ot_prod = 0
@@ -217,6 +151,7 @@ def calculate_aggregate_planning(strategy, demand_list):
             deficit -= ot_prod
             
             if deficit > 0:
+                # Alokasi subkontrak harus memenuhi ambang batas minimum produksi yang ditentukan
                 sub_needed = max(min_sub_cap, deficit)
                 sub_prod = min(max_sub_cap, sub_needed)
                 deficit = max(0, deficit - sub_prod)
@@ -224,6 +159,7 @@ def calculate_aggregate_planning(strategy, demand_list):
         elif strategy in ["Chase", "Level"] and deficit > 0:
             pass
 
+        # 3. Logika Inventori & Stockout Balance Sheet
         total_supply = inv_prev + rt_prod + ot_prod + sub_prod
         balance = total_supply - net_demand
         
@@ -234,6 +170,7 @@ def calculate_aggregate_planning(strategy, demand_list):
             inv_end = 0
             stockout = abs(balance)
             
+        # 4. Kalkulasi Struktur Biaya Detail per Periode
         cost_mat = (rt_prod + ot_prod) * c_material 
         cost_rep = rt_prod * c_regular
         cost_labor = wf_current * 3000000
@@ -275,12 +212,14 @@ def calculate_aggregate_planning(strategy, demand_list):
         
     return pd.DataFrame(records)
 
+# Penyesuaian Multiplier Skenario Demand Uncertainty
 demand_scenarios = {
     "Normal": base_demand,
     "Optimis": [int(d * 1.25) for d in base_demand],
     "Pesimis": [int(d * 0.75) for d in base_demand]
 }
 
+# Generate Data untuk Seluruh Kombinasi Strategi & Skenario
 results = {}
 for strat in ["Chase", "Level", "Mixed"]:
     results[strat] = {}
@@ -288,7 +227,7 @@ for strat in ["Chase", "Level", "Mixed"]:
         results[strat][scen] = calculate_aggregate_planning(strat, d_list)
 
 # ==============================================================================
-# 4. EVALUASI METRIK KPI UTAMA (EXPECTED VALUE)
+# 4. EVALUASI METRIK KPI UTAMA VIA EXPECTED VALUE
 # ==============================================================================
 summary_metrics = []
 for strat in ["Chase", "Level", "Mixed"]:
@@ -325,7 +264,7 @@ for strat in ["Chase", "Level", "Mixed"]:
 summary_df = pd.DataFrame(summary_metrics)
 
 # ==============================================================================
-# 5. LAYOUT TABS UTAMA
+# 5. LAYOUT UTAMA: TABS INTERAKTIF
 # ==============================================================================
 tab1, tab2, tab3 = st.tabs([
     "📈 Ringkasan Eksekutif & Rekomendasi", 
@@ -333,7 +272,9 @@ tab1, tab2, tab3 = st.tabs([
     "🎲 Analisis Risiko Skenario (Robust Planning)"
 ])
 
-# --- TAB 1 ---
+# ------------------------------------------------------------------------------
+# TAB 1: EXECUTIVE SUMMARY & STRATEGIC RECOMMENDATION
+# ------------------------------------------------------------------------------
 with tab1:
     st.subheader(f"Key Performance Indicator (KPI) - Skenario: {selected_scenario}")
     
@@ -344,9 +285,9 @@ with tab1:
             <div class="kpi-card">
                 <div class="kpi-title">Strategi {row['Strategi']}</div>
                 <div class="kpi-value">IDR {row['Total Cost (Active)']:,.0f}</div>
-                <small style="color: #495057;">Expected Cost: IDR {row['Expected Cost']:,.0f}</small><br>
-                <small style="color: #495057;">Service Level: {row['Service Level']:.2f}%</small><br>
-                <small style="color: #495057;">Cap. Util: {row['Capacity Utilization']:.1f}%</small>
+                <small>Expected Cost: IDR {row['Expected Cost']:,.0f}</small><br>
+                <small>Service Level: {row['Service Level']:.2f}%</small><br>
+                <small>Cap. Util: {row['Capacity Utilization']:.1f}%</small>
             </div>
             """, unsafe_allow_html=True)
             
@@ -355,17 +296,13 @@ with tab1:
     c1, c2 = st.columns(2)
     with c1:
         fig_cost = px.bar(summary_df, x="Strategi", y="Total Cost (Active)", 
-                          title=f"Perbandingan Total Biaya Operasional ({selected_scenario})",
-                          color="Strategi", text_auto=',.0f',
-                          color_discrete_sequence=["#ff69b4", "#db7093", "#ffb6c1"])
-        fig_cost.update_layout(template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#111111"))
+                          title=f"Perbandingan Total Biaya Operasional Horison 12 Bulan ({selected_scenario})",
+                          color="Strategi", text_auto=',.0f')
         st.plotly_chart(fig_cost, use_container_width=True)
     with c2:
         fig_sl = px.bar(summary_df, x="Strategi", y="Service Level", 
                         title="Tingkat Layanan Pemenuhan Permintaan (Service Level %)",
-                        color="Strategi", text_auto='.2f', range_y=[0, 105],
-                        color_discrete_sequence=["#ff69b4", "#db7093", "#ffb6c1"])
-        fig_sl.update_layout(template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#111111"))
+                        color="Strategi", text_auto='.2f', range_y=[0, 105])
         st.plotly_chart(fig_sl, use_container_width=True)
 
     st.markdown("### 🤖 Rekomendasi Strategi Optimal")
@@ -385,7 +322,9 @@ with tab1:
     </div>
     """, unsafe_allow_html=True)
 
-# --- TAB 2 ---
+# ------------------------------------------------------------------------------
+# TAB 2: DETAILED STRATEGY DEEP-DIVE
+# ------------------------------------------------------------------------------
 with tab2:
     selected_strategy = st.radio("Pilih Strategi untuk Analisis Mendalam:", ["Chase", "Level", "Mixed"], horizontal=True)
     df_selected = results[selected_strategy][selected_scenario]
@@ -397,19 +336,22 @@ with tab2:
     if selected_strategy == "Chase":
         st.subheader("👨‍🏭 Workforce & Capacity Adjustment Sheet (Chase Focus)")
         st.dataframe(df_selected[["Periode", "Workforce", "Hiring", "Firing", "RT Production"]].style.format(precision=0), use_container_width=True)
+        
     elif selected_strategy == "Level":
         st.subheader("📦 Inventory Buffer & Capacity Efficiency Sheet (Level Focus)")
         df_level_spec = df_selected[["Periode", "Inventory", "Stockout", "RT Production"]].copy()
         df_level_spec["Capacity Efficiency (%)"] = (df_level_spec["RT Production"] / (df_selected["Workforce"] * worker_cap)) * 100
         st.dataframe(df_level_spec.style.format(precision=1), use_container_width=True)
+        
     elif selected_strategy == "Mixed":
         st.subheader("🔄 Sourcing Optimization & Make-or-Buy Analysis (Mixed Focus)")
         mob_df = df_selected[["Periode", "RT Production", "OT Production", "Subcontracting"]].copy()
+        # Mencegah pembagian dengan nol jika tidak ada aktivitas produksi sama sekali
         total_p = mob_df["RT Production"] + mob_df["OT Production"] + mob_df["Subcontracting"]
         mob_df["Internal Content (%)"] = np.where(total_p > 0, ((mob_df["RT Production"] + mob_df["OT Production"]) / total_p) * 100, 0)
         st.dataframe(mob_df.style.format(precision=1), use_container_width=True)
         
-        st.subheader("🪵 Raw Material Requirements Planning")
+        st.subheader("🪵 Raw Material Requirements Planning (BOM Explode Proxy)")
         raw_mat_df = pd.DataFrame({
             "Periode": df_selected["Periode"],
             "Incoming Material (Unit)": (df_selected["RT Production"] + df_selected["OT Production"]) * 1.05,
@@ -422,23 +364,38 @@ with tab2:
     st.subheader("💸 Analisis Finansial & Struktur Biaya Berjalan")
     cost_cols = ["Periode", "Material Cost", "Production Cost", "Labor Cost", "Hiring Cost", "Firing Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost", "Total Cost"]
     st.dataframe(df_selected[cost_cols].style.format(precision=0), use_container_width=True)
-
+    
     st.markdown("### 📊 Visualisasi Performa Berkala (12 Periode)")
     v1, v2 = st.columns(2)
     with v1:
         fig_dp = go.Figure()
         fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Real", line=dict(color='red', width=2, dash='dash')))
         fig_dp.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["RT Production"] + df_selected["OT Production"] + df_selected["Subcontracting"], name="Total Produksi", marker_color='royalblue'))
-        fig_dp.update_layout(title="Perbandingan Tren Permintaan vs Pasokan", barmode='group', template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#111111"))
+        fig_dp.update_layout(title="Perbandingan Tren Permintaan vs Realisasi Pasokan (12 Bulan)", barmode='group')
         st.plotly_chart(fig_dp, use_container_width=True)
     with v2:
-        fig_cb = px.bar(df_selected, x="Periode", y=["Material Cost", "Production Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost"], title="Komponen Biaya per Periode")
-        fig_cb.update_layout(template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#111111"))
+        fig_cb = px.bar(df_selected, x="Periode", y=["Material Cost", "Production Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost"],
+                        title="Dinamika Komponen Biaya per Periode")
         st.plotly_chart(fig_cb, use_container_width=True)
 
-# --- TAB 3 ---
+    v3, v4 = st.columns(2)
+    with v3:
+        fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, line_shape="linear")
+        st.plotly_chart(fig_inv, use_container_width=True)
+    with v4:
+        fig_os = go.Figure()
+        fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["OT Production"], name="Overtime Vol", marker_color='orange'))
+        fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["Subcontracting"], name="Subcontract Vol", marker_color='purple'))
+        fig_os.update_layout(title="Alokasi Kapasitas Tambahan: Lembur vs Pihak Ketiga", barmode='stack')
+        st.plotly_chart(fig_os, use_container_width=True)
+
+# ------------------------------------------------------------------------------
+# TAB 3: ROBUST SCENARIO & RISK ANALYSIS
+# ------------------------------------------------------------------------------
 with tab3:
     st.subheader("🎲 Matriks Analisis Risiko & Robust Planning")
+    st.markdown("Tabel di bawah menyajikan komparasi performa finansial di seluruh spektrum kemungkinan permintaan untuk menguji ketangguhan model.")
+    
     robust_records = []
     for strat in ["Chase", "Level", "Mixed"]:
         c_norm = results[strat]["Normal"]["Total Cost"].sum()
@@ -453,6 +410,7 @@ with tab3:
             "Skenario Optimis (Cost)": c_opt,
             "Expected Robust Cost": exp_c
         })
+        
     robust_df = pd.DataFrame(robust_records)
     st.dataframe(robust_df.style.format({
         "Skenario Pesimis (Cost)": "IDR {:,.0f}",
@@ -462,13 +420,12 @@ with tab3:
     }), use_container_width=True)
     
     fig_robust = go.Figure()
-    line_colors = {"Chase": "#ff1493", "Level": "#d81b60", "Mixed": "#4169e1"}
     for strat in ["Chase", "Level", "Mixed"]:
         row = robust_df[robust_df["Strategi"] == strat].iloc[0]
         fig_robust.add_trace(go.Scatter(
             x=["Pesimis", "Normal", "Optimis"], 
             y=[row["Skenario Pesimis (Cost)"], row["Skenario Normal (Cost)"], row["Skenario Optimis (Cost)"]],
-            mode='lines+markers', name=f"Profil Risiko {strat}", line=dict(color=line_colors[strat], width=4)
+            mode='lines+markers', name=f"Profil Risiko {strat}"
         ))
-    fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario", yaxis_title="Total Biaya (IDR)", template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color="#111111"))
+    fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", yaxis_title="Total Biaya (IDR)")
     st.plotly_chart(fig_robust, use_container_width=True)
