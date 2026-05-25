@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.graph_objects as go
+import plotly.graph_objects go
 import plotly.express as px
 
 # ==============================================================================
-# 1. KONFIGURASI HALAMAN & FORCE MUTLAK LIGHT MODE (ANTI-DARK MODE SYSTEM)
+# 1. KONFIGURASI HALAMAN & INJEKSI CSS TOTAL LIGHT MODE (ANTI-DARK MODE SYSTEM)
 # ==============================================================================
 st.set_page_config(
     page_title="Interactive Aggregate Planning Dashboard",
@@ -13,11 +13,11 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Injeksi CSS Radikal tingkat dewa untuk menghancurkan Dark Mode bawaan browser pada elemen Streamlit
+# Injeksi CSS Radikal tingkat lanjut untuk menghancurkan paksaan Dark Mode dari browser
 st.markdown("""
 <style>
-    /* Mengubah paksa variabel warna internal inti Streamlit langsung dari akarnya */
-    :root, [data-theme="dark"], [data-theme="light"] {
+    /* Mengubah paksa seluruh variabel warna dasar internal Streamlit */
+    :root, [data-theme="dark"], [data-theme="light"], [data-testid="stSidebar"] {
         --st-background-color: #ffffff !important;
         --st-secondary-background-color: #fdf6f6 !important;
         --st-text-color: #000000 !important;
@@ -25,24 +25,24 @@ st.markdown("""
         color: #000000 !important;
     }
 
-    /* 1. Memaksa Background Aplikasi Utama & Container Menjadi Putih Bersih */
+    /* 1. Memaksa Background Aplikasi Utama & Seluruh Container Menjadi Putih Bersih */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMainBlockContainer"] {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
     
-    /* 2. Memaksa Area Sidebar Samping Menjadi Putih Bersih Jelas */
+    /* 2. Memaksa Area Sidebar Samping Menjadi Putih Bersih Sempurna */
     [data-testid="stSidebar"], [data-testid="stSidebarUserContent"], [data-testid="stSidebarNav"] {
         background-color: #ffffff !important;
         border-right: 2px solid #ffe4e1 !important;
     }
 
-    /* 3. Memaksa Semua Elemen Teks Standard Menjadi Hitam Pekat */
+    /* 3. Memaksa Semua Elemen Teks Dashboard Menjadi Hitam Pekat & Jelas Terbaca */
     h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, p, li, div, small {
         color: #000000 !important;
     }
     
-    /* Memaksa teks judul subheader di sidebar agar hitam tebal */
+    /* Penegasan teks judul parameter khusus di area sidebar */
     [data-testid="stSidebar"] p, 
     [data-testid="stSidebar"] label, 
     [data-testid="stSidebar"] h1, 
@@ -53,33 +53,36 @@ st.markdown("""
         font-weight: bold !important;
     }
 
-    /* 4. PERBAIKAN RADIKAL SIDEBAR: Paksa Box Input Angka & Selectbox Menjadi Putih Bersih */
+    /* 4. PERBAIKAN SIDEBAR & INPUT: Paksa Box Input Angka, Textbox & Selectbox Menjadi Putih Bersih */
     div[data-baseweb="input"], 
     div[data-baseweb="select"], 
     .stNumberInput input, 
     .stSelectbox div, 
     div[role="combobox"],
     input[type="number"],
-    [data-testid="stSidebar"] div {
+    [data-testid="stSidebar"] div,
+    [data-baseweb="base-input"] {
         background-color: #ffffff !important;
         color: #000000 !important;
+        border-color: #ffb6c1 !important;
     }
     
-    /* Menembus text fill color browser mode gelap */
-    input {
+    /* Menembus paksaan text-fill browser agar font tetap hitam pekat di dalam box putih */
+    input, select, textarea {
         color: #000000 !important;
         background-color: #ffffff !important;
         -webkit-text-fill-color: #000000 !important;
     }
 
-    /* 5. PERBAIKAN RADIKAL TOMBOL (+ / -): Menghapus Latar Belakang Hitam Sempurna */
+    /* 5. PERBAIKAN TOMBOL (+ / -) SIDEBAR: Mengubah Latar Gelap Menjadi Soft Pink Pastel */
     button[title="Increment"], 
     button[title="Decrement"], 
     [data-testid="stNumberInputStepDown"], 
     [data-testid="stNumberInputStepUp"],
-    .stNumberInput button {
+    .stNumberInput button,
+    div[data-baseweb="input"] ~ button {
         color: #000000 !important;
-        background-color: #ffe4e1 !important; /* Warna pink cerah penanda tombol */
+        background-color: #ffe4e1 !important; 
         border: 1px solid #ffb6c1 !important;
         opacity: 1 !important;
     }
@@ -88,13 +91,13 @@ st.markdown("""
         background-color: #ffccd5 !important;
     }
 
-    /* 6. Memaksa List Pilihan Dropdown Skenario yang Muncul Keluar Tetap Putih */
-    ul[role="listbox"], li[role="option"], div[data-baseweb="menu"], div[data-baseweb="popover"] {
+    /* 6. Memaksa List Pilihan Dropdown Skenario Tetap Putih & Teks Hitam */
+    ul[role="listbox"], li[role="option"], div[data-baseweb="menu"], div[data-baseweb="popover"], [data-baseweb="dropdown"] {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
 
-    /* 7. Garis Pembatas Horizontal Bertema Pink */
+    /* 7. Garis Pembatas Horizontal */
     hr {
         border: 0 !important;
         height: 2px !important;
@@ -102,11 +105,11 @@ st.markdown("""
         margin: 20px 0 !important;
     }
 
-    /* 8. PENGEMBANGAN VISUAL MENU TAB BAR ATAS (EFEK TIMBUL KETIKA DIPENCET) */
+    /* 8. VISUAL MENU TAB BAR ATAS (EFEK TIMBUL NYALA SAAT DIPENCET) */
     button[data-baseweb="tab"] {
-        color: #444444 !important;
+        color: #000000 !important;
         font-weight: 600 !important;
-        background-color: #fdf6f6 !important; /* Latar dasar tab tidak aktif */
+        background-color: #fdf6f6 !important; /* Warna tab saat sedang diam */
         margin-right: 6px !important;
         border-radius: 8px 8px 0px 0px !important;
         padding: 12px 24px !important;
@@ -115,23 +118,22 @@ st.markdown("""
         transition: all 0.3s ease !important;
     }
     
-    /* Efek Timbul Menyala saat Tab Dipilih / Dipencet */
+    /* Efek Berubah Warna Menyala Timbul Saat Tab Dipilih */
     button[data-baseweb="tab"][aria-selected="true"] {
         color: #ffffff !important;
-        background-color: #d81b60 !important; /* Warna Pink Tua Berkilau */
+        background-color: #d81b60 !important; /* Pink Tua Menyala */
         border-color: #d81b60 !important;
-        box-shadow: 0px -4px 10px rgba(216, 27, 96, 0.2) !important; /* Efek bayangan timbul ke atas */
-        font-weight: bold !important;
-        transform: translateY(-2px) !important; /* Naik sedikit menciptakan efek 3D */
+        box-shadow: 0px -4px 12px rgba(216, 27, 96, 0.3) !important; /* Efek bayangan timbul ke atas */
+        transform: translateY(-3px) !important; /* Naik ke atas memberi efek 3D timbul */
     }
 
-    /* 9. Frame Luar Penampung Tabel Data */
+    /* 9. Frame Utama Penampung Tabel Data */
     [data-testid="stDataEditor"], .stDataFrame, div[data-testid="stTable"], .glideDataGrid {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
 
-    /* 10. Desain Kartu KPI */
+    /* 10. Desain Kartu KPI Executive */
     .kpi-card {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -210,7 +212,7 @@ demand_init_df = pd.DataFrame({"Periode": [f"Bulan {i+1}" for i in range(num_per
 
 # Memaksa warna data editor di samping menggunakan engine style pandas light
 demand_df = st.sidebar.data_editor(
-    demand_init_df.style.set_properties(**{'background-color': '#ffffff', 'color': '#000000'}),
+    demand_init_df,
     hide_index=True
 )
 base_demand = demand_df["Demand"].tolist()
@@ -255,7 +257,7 @@ if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Logika Asli Tidak Berubah)
+# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Logika Asli Tidak Diubah)
 # ==============================================================================
 def calculate_aggregate_planning(strategy, demand_list):
     inv_prev = init_inv
@@ -445,7 +447,7 @@ with tab1:
                           color="Strategi", text_auto=',.0f',
                           color_discrete_sequence=["#ffccd5", "#f48fb1", "#c2185b"])
         
-        # PERBAIKAN GRAFIK PLOTLY SECARA ABSOLUT AGAR TERLIHAT DI MODE APAPUN
+        # PERBAIKAN GRAFIK PLOTLY SECARA MUTLAK (ANTI GAGAL SANGGUP FORCE LIGHT MODE)
         fig_cost.update_layout(
             template="plotly_white",
             plot_bgcolor='#ffffff', 
@@ -463,7 +465,7 @@ with tab1:
                         color="Strategi", text_auto='.2f', range_y=[0, 105],
                         color_discrete_sequence=["#ffccd5", "#f48fb1", "#c2185b"])
         
-        # PERBAIKAN GRAFIK PLOTLY SECARA ABSOLUT AGAR TERLIHAT DI MODE APAPUN
+        # PERBAIKAN GRAFIK PLOTLY SECARA MUTLAK (ANTI GAGAL SANGGUP FORCE LIGHT MODE)
         fig_sl.update_layout(
             template="plotly_white",
             plot_bgcolor='#ffffff', 
@@ -500,7 +502,6 @@ with tab2:
     df_selected = results[selected_strategy][selected_scenario]
     
     st.subheader(f"📋 Master Table Aggregate Production Planning: {selected_strategy} ({selected_scenario})")
-    master_display = df_selected[["Periode", "Demand", "Net Demand", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]]
     st.dataframe(style_table_light(master_display, 0), use_container_width=True)
     
     if selected_strategy == "Chase":
