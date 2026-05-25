@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # ==============================================================================
-# 1. KONFIGURASI HALAMAN & STYLE DASHBOARD (FULL LIGHT THEME & PINK ACCENT)
+# 1. KONFIGURASI HALAMAN & STYLE DASHBOARD (FORCED BRIGHT THEME)
 # ==============================================================================
 st.set_page_config(
     page_title="Interactive Aggregate Planning Dashboard",
@@ -13,117 +13,108 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Komprehensif untuk Memaksa Tema Cerah dan Memperbaiki Theme Clash
+# Perombakan Total CSS untuk Memaksa Light Mode di Server bertipe Dark Mode
 st.markdown("""
 <style>
-    /* 1. Reset Global ke Light Mode */
+    /* Mengunci sistem browser ke skema light secara paksa */
     :root {
         color-scheme: light !important;
+        --st-background: #ffffff !important;
+        --st-color: #111111 !important;
     }
     
-    html, body, [data-testid="stAppViewContainer"], .main {
+    /* Memaksa background utama dan sidebar menjadi putih bersih */
+    html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"], .main {
         background-color: #ffffff !important;
         color: #111111 !important;
     }
-
-    /* 2. Style Sidebar & Komponen Di Dalamnya */
+    
     [data-testid="stSidebar"] {
-        background-color: #fcf8fa !important; /* Putih bersih sedikit aksen lembut */
-        border-right: 2px solid #ff69b4 !important; /* Garis tepi pink muda */
+        background-color: #ffffff !important;
+        border-right: 3px solid #ff69b4 !important; /* Garis tepi pink manis */
+    }
+
+    /* Memaksa seluruh teks komponen dasar menjadi hitam pekat */
+    h1, h2, h3, h4, h5, h6, p, label, span, .stMarkdown {
+        color: #111111 !important;
     }
     
-    [data-testid="stSidebar"] .stMarkdown, 
-    [data-testid="stSidebar"] label, 
-    [data-testid="stSidebar"] p,
-    [data-testid="stSidebar"] h1,
-    [data-testid="stSidebar"] h2,
-    [data-testid="stSidebar"] h3 {
-        color: #111111 !important;
-        font-weight: 600 !important;
+    /* MEMBONGKAR ELEMEN TABEL (st.dataframe & st.data_editor) AGAR TIDAK HITAM */
+    [data-testid="stDataFrame"], [data-testid="stDataEditor"], [data-testid="stTable"] {
+        background-color: #ffffff !important;
+        border: 2px solid #ff69b4 !important;
+        border-radius: 6px !important;
     }
-
-    /* 3. Perbaikan Input Box, Dropdown & Tombol (+ / -) */
-    div[data-baseweb="input"], div[data-baseweb="select"], .stNumberInput input {
+    
+    /* Memaksa latar belakang baris kontainer tabel internal Streamlit */
+    div[data-baseweb="table"] {
+        background-color: #ffffff !important;
+    }
+    
+    /* Perbaikan Kotak Input & Tombol (+ / -) di Sidebar */
+    div[data-baseweb="input"], div[data-baseweb="select"], select, input {
         background-color: #ffffff !important;
         color: #111111 !important;
         border: 1px solid #ff69b4 !important;
     }
     
-    /* Tombol plus-minus pada number input */
+    /* Mendesain tombol langkah (+/-) pada number input agar kontras */
     button[title="Increment"], button[title="Decrement"], 
     [data-testid="stNumberInputStepDown"], [data-testid="stNumberInputStepUp"] {
         background-color: #ff69b4 !important;
         color: #ffffff !important;
-        border-radius: 4px !important;
+        border: none !important;
+        opacity: 1 !important;
     }
     
     button[title="Increment"]:hover, button[title="Decrement"]:hover {
         background-color: #ff1493 !important;
     }
 
-    /* 4. Perbaikan Tabel & Data Editor Bawaan Streamlit */
-    div[data-testid="stDataFrame"], div[data-testid="stDataEditor"], .stTable {
-        background-color: #ffffff !important;
-        border: 1px solid #ff69b4 !important;
-        border-radius: 6px;
-    }
-    
-    /* Memaksa teks sel di dalam canvas dataframe menjadi hitam */
-    div[data-testid="stGridCanvas"] {
-        color: #111111 !important;
-    }
-
-    /* 5. Komponen Card KPI & Rekomendasi */
+    /* Komponen Card KPI & Rekomendasi */
     .kpi-card {
         background-color: #ffffff !important;
         border-radius: 8px;
         padding: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        border: 1px solid #f0f0f0;
-        border-left: 6px solid #ff1493 !important; /* Garis aksen merah muda tegas */
+        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        border: 1px solid #ffb6c1;
+        border-left: 6px solid #ff1493 !important;
         margin-bottom: 15px;
-        color: #111111 !important;
     }
-    .kpi-title { font-size: 14px; color: #555555 !important; font-weight: bold; text-transform: uppercase; }
+    .kpi-title { font-size: 14px; color: #444444 !important; font-weight: bold; text-transform: uppercase; }
     .kpi-value { font-size: 24px; color: #000000 !important; font-weight: bold; margin-top: 5px; }
-    .kpi-card small { color: #333333 !important; font-weight: 500; }
+    .kpi-card small { color: #222222 !important; font-weight: bold; }
     
     .recommendation-box {
-        background-color: #fff0f5 !important; /* Lavender blush / Pink sangat muda */
+        background-color: #fff0f5 !important;
         border-radius: 8px;
         padding: 25px;
         border: 1px solid #ffb6c1;
         border-left: 6px solid #ff1493 !important;
         margin-top: 20px;
-        color: #111111 !important;
     }
     .recommendation-box h4 { color: #ff1493 !important; font-weight: bold; }
-    .recommendation-box li, .recommendation-box p { color: #111111 !important; }
+    .recommendation-box li, .recommendation-box p { color: #111111 !important; font-weight: 500; }
 
-    /* 6. Pembatas Horizontal dan Desain Tab */
+    /* Garis pembatas pembagi halaman */
     hr {
         border: 0;
         height: 2px;
-        background: #ff69b4 !important;
+        background: #ff1493 !important;
         margin: 20px 0;
     }
 
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
-    }
-
+    /* Style Navigasi Tab */
+    .stTabs [data-baseweb="tab-list"] { gap: 8px; }
     .stTabs [data-baseweb="tab"] {
         background-color: #f8f9fa !important;
         border: 1px solid #e0e0e0 !important;
-        padding: 8px 16px;
-        border-radius: 4px 4px 0px 0px;
         color: #111111 !important;
+        padding: 6px 12px;
     }
-
     .stTabs [aria-selected="true"] {
         background-color: #fff0f5 !important;
         border-top: 3px solid #ff1493 !important;
-        border-bottom: none !important;
         font-weight: bold !important;
     }
 </style>
@@ -356,6 +347,20 @@ tab1, tab2, tab3 = st.tabs([
     "🎲 Analisis Risiko Skenario (Robust Planning)"
 ])
 
+# Fungsi helper untuk memaksa grafik bertema terang dengan font teks HITAM PEKAT
+def apply_forced_light_theme(fig):
+    fig.update_layout(
+        template="plotly_white",
+        paper_bgcolor='#ffffff',
+        plot_bgcolor='#ffffff',
+        font=dict(color="#111111"),
+        title_font=dict(color="#111111"),
+        xaxis=dict(gridcolor="#e5e5e5", tickfont=dict(color="#111111"), title_font=dict(color="#111111")),
+        yaxis=dict(gridcolor="#e5e5e5", tickfont=dict(color="#111111"), title_font=dict(color="#111111")),
+        legend=dict(font=dict(color="#111111"))
+    )
+    return fig
+
 # ------------------------------------------------------------------------------
 # TAB 1: EXECUTIVE SUMMARY & STRATEGIC RECOMMENDATION
 # ------------------------------------------------------------------------------
@@ -381,14 +386,14 @@ with tab1:
     with c1:
         fig_cost = px.bar(summary_df, x="Strategi", y="Total Cost (Active)", 
                           title=f"Perbandingan Total Biaya Operasional Horison 12 Bulan ({selected_scenario})",
-                          color="Strategi", text_auto=',.0f', template="plotly_white")
-        fig_cost.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                          color="Strategi", text_auto=',.0f')
+        fig_cost = apply_forced_light_theme(fig_cost)
         st.plotly_chart(fig_cost, use_container_width=True)
     with c2:
         fig_sl = px.bar(summary_df, x="Strategi", y="Service Level", 
                         title="Tingkat Layanan Pemenuhan Permintaan (Service Level %)",
-                        color="Strategi", text_auto='.2f', range_y=[0, 105], template="plotly_white")
-        fig_sl.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                        color="Strategi", text_auto='.2f', range_y=[0, 105])
+        fig_sl = apply_forced_light_theme(fig_sl)
         st.plotly_chart(fig_sl, use_container_width=True)
 
     st.markdown("### 🤖 Rekomendasi Strategi Optimal")
@@ -456,24 +461,26 @@ with tab2:
         fig_dp = go.Figure()
         fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Real", line=dict(color='red', width=2, dash='dash')))
         fig_dp.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["RT Production"] + df_selected["OT Production"] + df_selected["Subcontracting"], name="Total Produksi", marker_color='royalblue'))
-        fig_dp.update_layout(title="Perbandingan Tren Permintaan vs Realisasi Pasokan (12 Bulan)", barmode='group', template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        fig_dp.update_layout(title="Perbandingan Tren Permintaan vs Realisasi Pasokan (12 Bulan)", barmode='group')
+        fig_dp = apply_forced_light_theme(fig_dp)
         st.plotly_chart(fig_dp, use_container_width=True)
     with v2:
         fig_cb = px.bar(df_selected, x="Periode", y=["Material Cost", "Production Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost"],
-                        title="Dinamika Komponen Biaya per Periode", template="plotly_white")
-        fig_cb.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+                        title="Dinamika Komponen Biaya per Periode")
+        fig_cb = apply_forced_light_theme(fig_cb)
         st.plotly_chart(fig_cb, use_container_width=True)
 
     v3, v4 = st.columns(2)
     with v3:
-        fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, line_shape="linear", template="plotly_white")
-        fig_inv.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, line_shape="linear")
+        fig_inv = apply_forced_light_theme(fig_inv)
         st.plotly_chart(fig_inv, use_container_width=True)
     with v4:
         fig_os = go.Figure()
         fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["OT Production"], name="Overtime Vol", marker_color='orange'))
         fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["Subcontracting"], name="Subcontract Vol", marker_color='purple'))
-        fig_os.update_layout(title="Alokasi Kapasitas Tambahan: Lembur vs Pihak Ketiga", barmode='stack', template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+        fig_os.update_layout(title="Alokasi Kapasitas Tambahan: Lembur vs Pihak Ketiga", barmode='stack')
+        fig_os = apply_forced_light_theme(fig_os)
         st.plotly_chart(fig_os, use_container_width=True)
 
 # ------------------------------------------------------------------------------
@@ -514,5 +521,6 @@ with tab3:
             y=[row["Skenario Pesimis (Cost)"], row["Skenario Normal (Cost)"], row["Skenario Optimis (Cost)"]],
             mode='lines+markers', name=f"Profil Risiko {strat}"
         ))
-    fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", yaxis_title="Total Biaya (IDR)", template="plotly_white", paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)')
+    fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", yaxis_title="Total Biaya (IDR)")
+    fig_robust = apply_forced_light_theme(fig_robust)
     st.plotly_chart(fig_robust, use_container_width=True)
