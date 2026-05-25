@@ -189,10 +189,10 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# INTEGRASI LOGO VIA DRIVE REAL DIRECT LINK 
+# INTEGRASI LOGO VIA DIRECT LINK TERUPDATE
 # ==============================================================================
-# Menggunakan struktur URL uc?id= untuk melewati halaman preview Google Drive
-direct_logo_url = "https://docs.google.com/uc?id=1V3x3dfHlsHP-LLbkxVGt4Z9NmfdoR8XH"
+# Tautan langsung yang Anda berikan untuk pemuatan instan
+direct_logo_url = "https://drive.google.com/uc?export=view&id=1V3x3dfHlsHP-LLbkxVGt4Z9NmfdoR8XH"
 st.image(direct_logo_url, width=150)
 
 st.title("📊 Sistem Pendukung Keputusan: Perencanaan Agregat Interaktif (12 Periode)")
