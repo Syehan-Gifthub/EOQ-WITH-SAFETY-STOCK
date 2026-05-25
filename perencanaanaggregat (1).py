@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # ==============================================================================
-# 1. KONFIGURASI HALAMAN & FORCE MUTLAK LIGHT SYSTEM VARIABEL (PUTIH & PINK)
+# 1. KONFIGURASI HALAMAN & INJEKSI CSS TOTAL UNTUK MEMAKSA LIGHT MODE (ANTI-DARK)
 # ==============================================================================
 st.set_page_config(
     page_title="Interactive Aggregate Planning Dashboard",
@@ -13,66 +13,71 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Menyuntikkan CSS variabel global untuk memaksa emulasi light mode di internal mesin Streamlit
+# Injeksi CSS super ketat untuk merombak seluruh elemen gelap menjadi putih/cerah
 st.markdown("""
 <style>
-    /* Mengubah paksa variabel warna internal Streamlit di level root */
-    :root {
-        --text-color: #000000 !important;
-        --background-color: #ffffff !important;
-        --secondary-background-color: #fdf6f6 !important;
-    }
-
-    /* 1. Memaksa Background Aplikasi Utama & Area Header Menjadi Putih Bersih */
+    /* 1. Paksa Background Utama & Header Menjadi Putih Bersih */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"], [data-testid="stMainBlockContainer"] {
         background-color: #ffffff !important;
         color: #000000 !important;
     }
     
-    /* 2. Memaksa Sidebar Samping Menjadi Putih Bersih Bersih dengan Garis Pink */
+    /* 2. Paksa Sidebar Menjadi Putih Bersih dengan Batas Soft Pink */
     [data-testid="stSidebar"], [data-testid="stSidebarUserContent"], [data-testid="stSidebarNav"] {
         background-color: #ffffff !important;
         border-right: 2px solid #ffe4e1 !important;
     }
 
-    /* 3. Memaksa Seluruh Teks Standar Dashboard Menjadi Hitam Pekat */
-    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, p, li {
+    /* 3. Paksa Semua Teks di Seluruh Aplikasi Menjadi Hitam Pekat (Kereng) */
+    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown, p, li, div, small {
         color: #000000 !important;
     }
     
-    /* Memastikan teks parameter di sidebar hitam dan tebal */
+    /* Penegasan teks parameter di area sidebar samping */
     [data-testid="stSidebar"] p, [data-testid="stSidebar"] label, [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] h4 {
-        color: #111111 !important;
-        font-weight: 600 !important;
+        color: #000000 !important;
+        font-weight: bold !important;
     }
 
-    /* 4. Memaksa Seluruh Dropdown Skenario & Selectbox Menjadi Putih (Bukan Hitam) */
-    div[data-baseweb="select"], div[role="combobox"], .stSelectbox div {
+    /* 4. PERBAIKAN TOTAL: Paksa Background Textbox, Dropdown & Input Angka Menjadi Putih */
+    div[data-baseweb="input"], 
+    div[data-baseweb="select"], 
+    .stNumberInput input, 
+    .stSelectbox div, 
+    div[role="combobox"],
+    div[data-testid="stMarkdownContainer"] input {
         background-color: #ffffff !important;
         color: #000000 !important;
         border: 1px solid #ffb6c1 !important;
     }
     
-    /* Memaksa list pilihan dropdown yang mencuat keluar tetap berlatar putih & teks hitam */
-    ul[role="listbox"], li[role="option"] {
-        background-color: #ffffff !important;
+    /* Paksa teks di dalam input box dan dropdown agar tetap HITAM */
+    input {
         color: #000000 !important;
-    }
-
-    /* Input angka di sidebar */
-    div[data-baseweb="input"], .stNumberInput input {
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        border-color: #ffb6c1 !important;
+        -webkit-text-fill-color: #000000 !important;
     }
     
-    /* Tombol naik/turun angka di sidebar */
-    button[title="Increment"], button[title="Decrement"] {
+    /* 5. PERBAIKAN TOTAL: Paksa Tombol Pilihan Plus (+) dan Minus (-) Menjadi Cerah */
+    button[title="Increment"], 
+    button[title="Decrement"], 
+    [data-testid="stNumberInputStepDown"], 
+    [data-testid="stNumberInputStepUp"] {
         color: #000000 !important;
         background-color: #ffe4e1 !important;
+        border: 1px solid #ffb6c1 !important;
+    }
+    
+    button[title="Increment"]:hover, button[title="Decrement"]:hover {
+        background-color: #ffccd5 !important;
     }
 
-    /* 5. Mengubah Garis Pembatas Horisontal Menjadi Warna Pink Cerah */
+    /* 6. Memaksa List Pilihan Dropdown yang Muncul Tetap Berlatar Putih & Teks Hitam */
+    ul[role="listbox"], li[role="option"], div[data-baseweb="menu"] {
+        background-color: #ffffff !important;
+        color: #000000 !important;
+    }
+
+    /* 7. Garis Pembatas Horisontal */
     hr {
         border: 0 !important;
         height: 2px !important;
@@ -80,24 +85,30 @@ st.markdown("""
         margin: 20px 0 !important;
     }
 
-    /* 6. Desain Navigasi Tab (Tab Aktif Berwarna Pink Tua, Garis Bawah Pink) */
+    /* 8. Desain Navigasi 3 Tab Menu Atas (Tab Aktif Pink Tua, Teks Jelas) */
     button[data-baseweb="tab"] {
         color: #444444 !important;
-        font-weight: 500 !important;
+        font-weight: 600 !important;
+        background-color: #fdf6f6 !important;
+        margin-right: 4px !important;
+        border-radius: 5px 5px 0px 0px !important;
+        padding: 10px 20px !important;
     }
     button[data-baseweb="tab"][aria-selected="true"] {
-        color: #d81b60 !important;
-        border-bottom-color: #ffb6c1 !important;
+        color: #ffffff !important;
+        background-color: #d81b60 !important; /* Tab aktif menjadi pink tua mencolok */
+        border-bottom-color: #d81b60 !important;
         font-weight: bold !important;
     }
 
-    /* 7. Memaksa Frame Luar Penampung Tabel Menjadi Putih Total */
-    [data-testid="stDataEditor"], .stDataFrame, div[data-testid="stTable"], .glideDataGrid {
+    /* 9. Penampung Tabel (DataFrame) */
+    [data-testid="stDataEditor"], .stDataFrame, div[data-testid="stTable"] {
         background-color: #ffffff !important;
         color: #000000 !important;
+        border: 1px solid #ffe4e1 !important;
     }
 
-    /* 8. Desain Kartu KPI */
+    /* 10. Desain Kartu KPI Executive */
     .kpi-card {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -109,26 +120,17 @@ st.markdown("""
     }
     .kpi-title { 
         font-size: 13px !important; 
-        color: #555555 !important; 
+        color: #333333 !important; 
         font-weight: bold !important; 
-        text-transform: uppercase !important; 
-        letter-spacing: 0.5px !important;
+        text-transform: uppercase !important;
     }
     .kpi-value { 
         font-size: 24px !important; 
         color: #d81b60 !important; 
-        font-weight: bold !important; 
-        margin-top: 5px !important; 
-        margin-bottom: 5px !important;
-    }
-    .kpi-card small { 
-        color: #111111 !important; 
-        font-weight: 500 !important; 
-        display: block !important;
-        margin-top: 2px !important;
+        font-weight: bold !important;
     }
     
-    /* 9. Desain Kotak Rekomendasi Jauh Lebih Terang */
+    /* 11. Kotak Rekomendasi */
     .recommendation-box {
         background-color: #ffffff !important;
         border-radius: 10px !important;
@@ -137,14 +139,6 @@ st.markdown("""
         border: 2px solid #ffe4e1 !important;
         border-left: 8px solid #ffb6c1 !important;
         margin-top: 20px !important;
-    }
-    .recommendation-box h4 { 
-        color: #d81b60 !important; 
-        font-weight: bold !important; 
-        margin-bottom: 15px !important;
-    }
-    .recommendation-box li, .recommendation-box p { 
-        color: #000000 !important; 
     }
 </style>
 """, unsafe_allow_html=True)
@@ -162,7 +156,7 @@ def style_table_light(df, precision_val=0):
         'border-color': '#ffe4e1'           # Pembatas garis sel pink muda
     }).set_table_styles([
         {
-            'selector': 'th',               # Merubah Kepala Tabel (Header)
+            'selector': 'th',               # Mengubah Kepala Tabel (Header)
             'props': [
                 ('background-color', '#ffccd5'), # Kepala tabel menjadi pink muda cerah
                 ('color', '#000000'),            # Teks kepala tabel hitam
@@ -191,7 +185,7 @@ st.sidebar.subheader("Permintaan (Demand) per Periode")
 default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
 demand_init_df = pd.DataFrame({"Periode": [f"Bulan {i+1}" for i in range(num_periods)], "Demand": default_demand})
 
-# Memaksa warna tabel editor di samping menggunakan engine style pandas light
+# Memaksa warna data editor di samping menggunakan engine style pandas light
 demand_df = st.sidebar.data_editor(
     demand_init_df.style.set_properties(**{'background-color': '#ffffff', 'color': '#000000'}),
     hide_index=True
@@ -238,7 +232,7 @@ if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Logika Utuh)
+# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT (Logika Asli)
 # ==============================================================================
 def calculate_aggregate_planning(strategy, demand_list):
     inv_prev = init_inv
@@ -355,7 +349,7 @@ for strat in ["Chase", "Level", "Mixed"]:
         results[strat][scen] = calculate_aggregate_planning(strat, d_list)
 
 # ==============================================================================
-# 4. EVALUASI METRIK KPI UTAMA VIA EXPECTED VALUE
+# 4. EVALUASI METRIK KPI UTAMA
 # ==============================================================================
 summary_metrics = []
 for strat in ["Chase", "Level", "Mixed"]:
@@ -413,9 +407,9 @@ with tab1:
             <div class="kpi-card">
                 <div class="kpi-title">Strategi {row['Strategi']}</div>
                 <div class="kpi-value">IDR {row['Total Cost (Active)']:,.0f}</div>
-                <small><b>Expected Cost:</b> IDR {row['Expected Cost']:,.0f}</small>
-                <small><b>Service Level:</b> {row['Service Level']:.2f}%</small>
-                <small><b>Cap. Util:</b> {row['Capacity Utilization']:.1f}%</small>
+                <small style="color: #000000 !important; display:block;"><b>Expected Cost:</b> IDR {row['Expected Cost']:,.0f}</small>
+                <small style="color: #000000 !important; display:block;"><b>Service Level:</b> {row['Service Level']:.2f}%</small>
+                <small style="color: #000000 !important; display:block;"><b>Cap. Util:</b> {row['Capacity Utilization']:.1f}%</small>
             </div>
             """, unsafe_allow_html=True)
             
@@ -427,14 +421,29 @@ with tab1:
                           title=f"Perbandingan Total Biaya Operasional Horison 12 Bulan ({selected_scenario})",
                           color="Strategi", text_auto=',.0f',
                           color_discrete_sequence=["#ffccd5", "#f48fb1", "#c2185b"])
-        fig_cost.update_layout(plot_bgcolor='white', paper_bgcolor='white', font_color='#000000')
+        # PERBAIKAN MUTLAK GRAFIK: Paksa warna latar belakang putih dan teks hitam pekat
+        fig_cost.update_layout(
+            template="plotly_white",
+            plot_bgcolor='white', 
+            paper_bgcolor='white', 
+            font=dict(color='#000000', size=12),
+            title_font=dict(color='#000000', size=14)
+        )
         st.plotly_chart(fig_cost, use_container_width=True)
+        
     with c2:
         fig_sl = px.bar(summary_df, x="Strategi", y="Service Level", 
                         title="Tingkat Layanan Pemenuhan Permintaan (Service Level %)",
                         color="Strategi", text_auto='.2f', range_y=[0, 105],
                         color_discrete_sequence=["#ffccd5", "#f48fb1", "#c2185b"])
-        fig_sl.update_layout(plot_bgcolor='white', paper_bgcolor='white', font_color='#000000')
+        # PERBAIKAN MUTLAK GRAFIK: Paksa warna latar belakang putih dan teks hitam pekat
+        fig_sl.update_layout(
+            template="plotly_white",
+            plot_bgcolor='white', 
+            paper_bgcolor='white', 
+            font=dict(color='#000000', size=12),
+            title_font=dict(color='#000000', size=14)
+        )
         st.plotly_chart(fig_sl, use_container_width=True)
 
     st.markdown("### 🤖 Rekomendasi Strategi Optimal")
@@ -444,7 +453,7 @@ with tab1:
     
     st.markdown(f"""
     <div class="recommendation-box">
-        <h4>🎯 Keputusan Strategis Berdasarkan Aturan Optimasi Terpadu:</h4>
+        <h4 style="color: #d81b60 !important; font-weight: bold;">🎯 Keputusan Strategis Berdasarkan Aturan Optimasi Terpadu:</h4>
         <ul>
             <li><b>Efisiensi Biaya Terbaik (Robust):</b> Strategi <b>{best_cost_strat}</b> memberikan nilai ekonomis paling tangguh (Expected Cost terendah lintas skenario).</li>
             <li><b>Keterandalan Layanan (Service Level):</b> Strategi <b>{best_sl_strat}</b> paling optimal meminimalisir risiko stockout di pasar.</li>
@@ -487,78 +496,4 @@ with tab2:
             "Periode": df_selected["Periode"],
             "Incoming Material (Unit)": (df_selected["RT Production"] + df_selected["OT Production"]) * 1.05,
             "Usage Material (Unit)": (df_selected["RT Production"] + df_selected["OT Production"]),
-            "Ending Inventory Material": np.maximum(0, 100 + ((df_selected["RT Production"] + df_selected["OT Production"]) * 0.05)),
-            "Material Shortage": 0
-        })
-        st.dataframe(style_table_light(raw_mat_df, 0), use_container_width=True)
-
-    st.subheader("💸 Analisis Finansial & Struktur Biaya Berjalan")
-    cost_cols = ["Periode", "Material Cost", "Production Cost", "Labor Cost", "Hiring Cost", "Firing Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost", "Total Cost"]
-    st.dataframe(style_table_light(df_selected[cost_cols], 0), use_container_width=True)
-    
-    st.markdown("### 📊 Visualisasi Performa Berkala (12 Periode)")
-    v1, v2 = st.columns(2)
-    with v1:
-        fig_dp = go.Figure()
-        fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Real", line=dict(color='#d81b60', width=2, dash='dash')))
-        fig_dp.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["RT Production"] + df_selected["OT Production"] + df_selected["Subcontracting"], name="Total Produksi", marker_color='#ffccd5'))
-        fig_dp.update_layout(barmode='group', plot_bgcolor='white', paper_bgcolor='white', font_color='#000000')
-        st.plotly_chart(fig_dp, use_container_width=True)
-    with v2:
-        fig_cb = px.bar(df_selected, x="Periode", y=["Material Cost", "Production Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost"],
-                        title="Dinamika Komponen Biaya per Periode",
-                        color_discrete_sequence=["#ffccd5", "#f48fb1", "#f8bbd0", "#ff80ab", "#ff4081", "#c2185b"])
-        fig_cb.update_layout(plot_bgcolor='white', paper_bgcolor='white', font_color='#000000')
-        st.plotly_chart(fig_cb, use_container_width=True)
-
-    v3, v4 = st.columns(2)
-    with v3:
-        fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, line_shape="linear")
-        fig_inv.update_traces(line_color='#d81b60', marker=dict(color='#ff4081'))
-        fig_inv.update_layout(plot_bgcolor='white', paper_bgcolor='white', font_color='#000000')
-        st.plotly_chart(fig_inv, use_container_width=True)
-    with v4:
-        fig_os = go.Figure()
-        fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["OT Production"], name="Overtime Vol", marker_color='#ffccd5'))
-        fig_os.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["Subcontracting"], name="Subcontract Vol", marker_color='#f48fb1'))
-        fig_os.update_layout(barmode='stack', plot_bgcolor='white', paper_bgcolor='white', font_color='#000000')
-        st.plotly_chart(fig_os, use_container_width=True)
-
-# ------------------------------------------------------------------------------
-# TAB 3: ROBUST SCENARIO & RISK ANALYSIS
-# ------------------------------------------------------------------------------
-with tab3:
-    st.subheader("🎲 Matriks Analisis Risiko & Robust Planning")
-    st.markdown("Tabel di bawah menyajikan komparasi performa finansial di seluruh spektrum kemungkinan permintaan untuk menguji ketangguhan model.")
-    
-    robust_records = []
-    for strat in ["Chase", "Level", "Mixed"]:
-        c_norm = results[strat]["Normal"]["Total Cost"].sum()
-        c_opt = results[strat]["Optimis"]["Total Cost"].sum()
-        c_pess = results[strat]["Pesimis"]["Total Cost"].sum()
-        exp_c = (c_norm * p_normal) + (c_opt * p_optimistic) + (c_pess * p_pessimistic)
-        
-        robust_records.append({
-            "Strategi": strat,
-            "Skenario Pesimis (Cost)": c_pess,
-            "Skenario Normal (Cost)": c_norm,
-            "Skenario Optimis (Cost)": c_opt,
-            "Expected Robust Cost": exp_c
-        })
-        
-    robust_df = pd.DataFrame(robust_records)
-    st.dataframe(style_table_light(robust_df, 0), use_container_width=True)
-    
-    fig_robust = go.Figure()
-    colors_robust = {"Chase": "#ffccd5", "Level": "#f48fb1", "Mixed": "#c2185b"}
-    for strat in ["Chase", "Level", "Mixed"]:
-        row = robust_df[robust_df["Strategi"] == strat].iloc[0]
-        fig_robust.add_trace(go.Scatter(
-            x=["Pesimis", "Normal", "Optimis"], 
-            y=[row["Skenario Pesimis (Cost)"], row["Skenario Normal (Cost)"], row["Skenario Optimis (Cost)"]],
-            mode='lines+markers', name=f"Profil Risiko {strat}",
-            line=dict(color=colors_robust[strat], width=3),
-            marker=dict(size=8)
-        ))
-    fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", yaxis_title="Total Biaya (IDR)", plot_bgcolor='white', paper_bgcolor='white', font_color='#000000')
-    st.plotly_chart(fig_robust, use_container_width=True)
+            "Ending Inventory Material": np.maximum(0, 1
