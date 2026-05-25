@@ -3,122 +3,135 @@ import pandas as pd
 import numpy as np
 import plotly.graph_objects as go
 import plotly.express as px
+from io import BytesIO
 
 # ==============================================================================
-# 1. KONFIGURASI HALAMAN & STYLE DASHBOARD (FULL LIGHT MODE & AKSEN PINK)
+# 1. KONFIGURASI HALAMAN & INJEKSI CUSTOM CSS FULL LIGHT MODE (AKSEN PINK)
 # ==============================================================================
 st.set_page_config(
-    page_title="Interactive Aggregate Planning Dashboard",
+    page_title="Interactive Aggregate Planning & MRP Dashboard",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS Komprehensif untuk Mengunci Tema Cerah & Menghilangkan Theme Clash
+# Injeksi CSS Radikal untuk mengunci Light Mode dan mewarnai ulang seluruh komponen Streamlit
 st.markdown("""
 <style>
-    /* 1. Pengunci Global Light Mode Browser */
+    /* 1. Global Light Mode Locking & Main Background */
     :root {
         color-scheme: light !important;
-        --primary-color: #ff1493 !important;
     }
-    
     html, body, [data-testid="stAppViewContainer"], .main {
         background-color: #ffffff !important;
         color: #111111 !important;
     }
-
-    /* 2. Reset Teks Global & Headings */
-    h1, h2, h3, h4, h5, h6, p, span, label, .stMarkdown {
+    
+    /* 2. Judul, Subheader, dan Teks Global */
+    h1, h2, h3, h4, h5, h6, p, span, label, li {
         color: #111111 !important;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
     
-    /* Garis Pembatas Horisontal dengan Aksen Pink */
-    hr {
-        border-top: 2px solid #ff6b8b !important;
-        margin-top: 1rem !important;
-        margin-bottom: 1rem !important;
-    }
-
-    /* 3. Penataan Sisi Sidebar (Full White) */
+    /* 3. Sidebar Styling Total */
     [data-testid="stSidebar"] {
-        background-color: #fcfcfc !important;
-        border-right: 2px solid #ff6b8b !important;
-    }
-    [data-testid="stSidebar"] .stMarkdown, [data-testid="stSidebar"] label, [data-testid="stSidebar"] span {
-        color: #111111 !important;
-    }
-
-    /* 4. Penataan UI Input Widget & Tombol (+ / -) */
-    div[data-baseweb="input"], div[data-baseweb="select"], .stNumberInput input, .stSelectbox div {
         background-color: #ffffff !important;
+        border-right: 2px solid #ff1493 !important; /* Garis pembatas pink tegas */
+    }
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+    [data-testid="stSidebar"] label {
         color: #111111 !important;
-        border: 1px solid #ff6b8b !important;
+        font-weight: 600 !important;
     }
     
-    /* Memastikan tombol + dan - pada Number Input berwarna hitam dan jelas */
-    button[title="Increment"], button[title="Decrement"], [data-testid="stNumberInputStepDown"], [data-testid="stNumberInputStepUp"] {
-        background-color: #f8f9fa !important;
-        color: #ff1493 !important;
-        border: 1px solid #ff6b8b !important;
+    /* 4. Overwrite Input Box, Data Editor, & Dropdown (Background Putih, Teks Hitam) */
+    div[data-baseweb="input"] {
+        background-color: #ffffff !important;
+        border: 1px solid #ff69b4 !important;
+        border-radius: 6px !important;
     }
-    button[title="Increment"]:hover, button[title="Decrement"]:hover {
-        background-color: #ff6b8b !important;
+    div[data-baseweb="input"] input {
+        color: #111111 !important;
+        background-color: #ffffff !important;
+    }
+    div[data-baseweb="select"] {
+        background-color: #ffffff !important;
+        border: 1px solid #ff69b4 !important;
+    }
+    div[data-baseweb="select"] span {
+        color: #111111 !important;
+    }
+    
+    /* Tombol plus/minus (+ / -) pada Number Input */
+    button[title="Increment/Decrement values"], 
+    [data-testid="stNumberInputStepUp"], 
+    [data-testid="stNumberInputStepDown"] {
+        background-color: #ff69b4 !important;
         color: #ffffff !important;
+        border-radius: 4px !important;
+        opacity: 1 !important;
+    }
+    button[title="Increment/Decrement values"]:hover {
+        background-color: #ff1493 !important;
     }
 
-    /* 5. Force Gaya Tabel & Data Editor Menjadi Terang */
-    div[data-testid="stDataFrame"], div[data-testid="stDataEditor"], .stDataFrame div {
+    /* 5. Rekayasa Gaya Tabel Bawaan & Data Editor (Paksa Putih & Garis Bagus) */
+    [data-testid="stDataFrame"], [data-testid="stDataEditor"] {
         background-color: #ffffff !important;
-        color: #111111 !important;
+        border: 1px solid #ff69b4 !important;
+        border-radius: 8px !important;
+        padding: 5px;
+    }
+    /* Memaksa sel di dalam canvas data editor/dataframe agar tidak gelap */
+    div[class*="glideDataEditor"] {
+        background-color: #ffffff !important;
     }
     
-    /* Override grid cell pada canvas internal Streamlit */
-    div[data-testid="stTable"] table {
-        background-color: #ffffff !important;
-        color: #111111 !important;
+    /* 6. Tabs Custom Styling (Aksen Pink) */
+    button[data-baseweb="tab"] {
+        color: #495057 !important;
+        background-color: #f8f9fa !important;
+        border: 1px solid #dee2e6 !important;
+        border-bottom: none !important;
+        margin-right: 4px !important;
+        padding: 10px 20px !important;
     }
-
-    /* 6. Modifikasi Desain Komponen KPI Card (Aksen Pink) */
-    .block-container { padding-top: 2rem; padding-bottom: 2rem; }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background-color: #ffffff !important;
+        color: #ff1493 !important;
+        border-top: 3px solid #ff1493 !important;
+        font-weight: bold !important;
+    }
+    
+    /* 7. Custom KPI Card & Box Informasi Terpadu */
     .kpi-card {
-        background-color: #ffffff;
+        background-color: #ffffff !important;
         border-radius: 8px;
         padding: 20px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-        border-left: 6px solid #ff1493;
-        border-top: 1px solid #eaeaea;
-        border-right: 1px solid #eaeaea;
-        border-bottom: 1px solid #eaeaea;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        border: 1px solid #f0f0f0;
+        border-left: 6px solid #ff1493 !important; /* Batas kiri tebal warna pink */
         margin-bottom: 15px;
-        color: #111111;
     }
-    .kpi-title { font-size: 14px; color: #444444; font-weight: bold; text-transform: uppercase; }
-    .kpi-value { font-size: 24px; color: #ff1493; font-weight: bold; margin-top: 5px; }
-    .kpi-card small { color: #333333; font-weight: 500; }
+    .kpi-title { font-size: 14px; color: #6c757d !important; font-weight: bold; text-transform: uppercase; }
+    .kpi-value { font-size: 24px; color: #111111 !important; font-weight: bold; margin-top: 5px; }
+    .kpi-card small { color: #495057 !important; font-weight: 500; }
     
-    /* 7. Modifikasi Kotak Rekomendasi (Aksen Pink Jelas) */
     .recommendation-box {
-        background-color: #fff0f5;
+        background-color: #fff0f5 !important; /* Warna latar lavender blush/pink sangat muda */
         border-radius: 8px;
         padding: 25px;
-        border-left: 6px solid #ff1493;
-        border-top: 1px solid #eaeaea;
-        border-right: 1px solid #eaeaea;
-        border-bottom: 1px solid #eaeaea;
+        border: 1px solid #ffb6c1;
+        border-left: 6px solid #ff1493 !important;
         margin-top: 20px;
-        color: #111111;
     }
-    .recommendation-box h4 { color: #ff1493; font-weight: bold; }
-    .recommendation-box li { color: #111111; }
-    .recommendation-box p { color: #111111; }
-
-    /* Gaya Tabs agar Selaras dengan Tema Cerah-Pink */
-    button[data-baseweb="tab"] {
-        color: #111111 !important;
-    }
-    button[aria-selected="true"] {
-        color: #ff1493 !important;
-        border-bottom-color: #ff1493 !important;
+    .recommendation-box h4 { color: #ff1493 !important; font-weight: bold; }
+    
+    /* Horizontal Rule Custom */
+    hr {
+        border: 0;
+        height: 1px;
+        background: linear-gradient(to right, #ff1493, #ff69b4, #ffffff) !important;
+        margin-bottom: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -230,7 +243,6 @@ def calculate_aggregate_planning(strategy, demand_list):
             deficit -= ot_prod
             
             if deficit > 0:
-                # Alokasi subkontrak harus memenuhi ambang batas minimum produksi yang ditentukan
                 sub_needed = max(min_sub_cap, deficit)
                 sub_prod = min(max_sub_cap, sub_needed)
                 deficit = max(0, deficit - sub_prod)
@@ -345,10 +357,13 @@ summary_df = pd.DataFrame(summary_metrics)
 # ==============================================================================
 # 5. LAYOUT UTAMA: TABS INTERAKTIF
 # ==============================================================================
-tab1, tab2, tab3 = st.tabs([
-    "📈 Ringkasan Eksekutif & Rekomendasi", 
-    "🔍 Detail Analisis Operasional per Strategi", 
-    "🎲 Analisis Risiko Skenario (Robust Planning)"
+# Menambahkan Tab MRP dari kode kedua Anda ke struktur utama secara seamless
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
+    "📈 Ringkasan Eksekutif Agregat", 
+    "🔍 Detail Analisis Operasional", 
+    "🎲 Analisis Risiko (Robust Planning)",
+    "📦 MRP - MCP Cumulative",
+    "🎯 MRP - Least Unit Cost (LUC)"
 ])
 
 # ------------------------------------------------------------------------------
@@ -374,13 +389,11 @@ with tab1:
     
     c1, c2 = st.columns(2)
     with c1:
-        # Ditambahkan template="plotly_white" untuk mencegah frame hitam
         fig_cost = px.bar(summary_df, x="Strategi", y="Total Cost (Active)", 
                           title=f"Perbandingan Total Biaya Operasional Horison 12 Bulan ({selected_scenario})",
                           color="Strategi", text_auto=',.0f', template="plotly_white")
         st.plotly_chart(fig_cost, use_container_width=True)
     with c2:
-        # Ditambahkan template="plotly_white"
         fig_sl = px.bar(summary_df, x="Strategi", y="Service Level", 
                         title="Tingkat Layanan Pemenuhan Permintaan (Service Level %)",
                         color="Strategi", text_auto='.2f', range_y=[0, 105], template="plotly_white")
@@ -445,6 +458,7 @@ with tab2:
     cost_cols = ["Periode", "Material Cost", "Production Cost", "Labor Cost", "Hiring Cost", "Firing Cost", "Inventory Holding Cost", "Overtime Cost", "Subcontract Cost", "Shortage Cost", "Total Cost"]
     st.dataframe(df_selected[cost_cols].style.format(precision=0), use_container_width=True)
     
+    st.markdown("---")
     st.subheader("📊 Visualisasi Performa Berkala (12 Periode)")
     v1, v2 = st.columns(2)
     with v1:
@@ -460,7 +474,7 @@ with tab2:
 
     v3, v4 = st.columns(2)
     with v3:
-        fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, line_shape="linear", template="plotly_white")
+        fig_inv = px.line(df_selected, x="Periode", y="Inventory", title="Fluktuasi Tingkat Inventori Akhir", markers=True, template="plotly_white")
         st.plotly_chart(fig_inv, use_container_width=True)
     with v4:
         fig_os = go.Figure()
@@ -509,3 +523,191 @@ with tab3:
         ))
     fig_robust.update_layout(title="Analisis Sensitivitas Struktur Biaya Lintas Skenario Permintaan", yaxis_title="Total Biaya (IDR)", template="plotly_white")
     st.plotly_chart(fig_robust, use_container_width=True)
+
+# ==============================================================================
+# INTEGRASI LOGIKA MRP (DARI KODE KEDUA) DENGAN SEAMLESS & AMAN
+# ==============================================================================
+
+# Pembuatan parameter tambahan di sidebar khusus MRP (Melanjutkan parameter Anda)
+st.sidebar.markdown("---")
+st.sidebar.header("📋 Parameter Tambahan MRP")
+setup_cost = st.sidebar.number_input("Setup Cost per Order (S)", value=500)
+holding_cost = st.sidebar.number_input("Holding Cost per Unit (H)", value=5)
+initial_inventory = st.sidebar.number_input("Initial Inventory", value=30)
+lead_time = st.sidebar.number_input("Lead Time (periods)", value=1)
+# Variabel safety_stock di-rename khusus MRP agar tidak bertabrakan dengan safety stock perencanaan agregat
+mrp_safety_stock = st.sidebar.number_input("MRP Safety Stock", value=0)
+
+# ---------------- TAB 4: MCP Tab ----------------
+with tab4:
+    st.subheader("MCP Cumulative Iteration")
+    uploaded_csv = st.file_uploader("Upload CSV (Period, GR, Scheduled_Receipts) for MCP", type=["csv"], key="mcp_tab")
+    if uploaded_csv:
+        df_input = pd.read_csv(uploaded_csv)
+        periods = len(df_input)
+        periods_label = [f"P{i+1}" for i in range(periods)]
+        gross_req = df_input['GR'].tolist()
+        scheduled_rec = df_input['Scheduled_Receipts'].tolist()
+
+        all_iterations = []
+        optimal_combinations = []
+        i = 0
+        current_inventory = initial_inventory
+        prev_cost_per_period = None
+
+        while i < periods:
+            best_combo = None
+            combos_tried = []
+
+            for j in range(i, periods):
+                temp_inventory = current_inventory
+                nr_list = []
+                for k in range(i, j+1):
+                    nr = max(0, gross_req[k] + mrp_safety_stock - (temp_inventory + scheduled_rec[k]))
+                    nr_list.append(nr)
+                    temp_inventory += nr + scheduled_rec[k] - gross_req[k]
+
+                net_demand = sum(nr_list)
+                planned_receipt = [0]*(j-i+1)
+                planned_receipt[0] = net_demand
+
+                temp_inv2 = current_inventory
+                cumulative_holding = 0
+                for k, nr in zip(range(j-i+1), nr_list):
+                    temp_inv2 += planned_receipt[k] + scheduled_rec[i+k] - gross_req[i+k]
+                    cumulative_holding += max(temp_inv2,0)
+                    temp_inv2 -= gross_req[i+k]
+
+                total_cost = setup_cost + holding_cost * cumulative_holding
+                cost_per_period = total_cost / (j-i+1)
+
+                combos_tried.append({
+                    "Period Combination": f"{periods_label[i]}-{periods_label[j]}" if i!=j else periods_label[i],
+                    "Net Requirement": net_demand,
+                    "Lot Size": net_demand,
+                    "Total Cost": total_cost,
+                    "Cost per Period": cost_per_period
+                })
+
+                if prev_cost_per_period is not None and cost_per_period > prev_cost_per_period:
+                    break
+                else:
+                    best_combo = (i,j,net_demand,total_cost,cost_per_period)
+                    prev_cost_per_period = cost_per_period
+
+            if best_combo is None:
+                best_combo = (i,i,nr_list[0], setup_cost + holding_cost*nr_list[0], setup_cost + holding_cost*nr_list[0])
+
+            all_iterations.extend(combos_tried)
+            start,end,lot_size,total_cost,cost_per_period = best_combo
+            optimal_combinations.append({
+                "Period Combination": f"{periods_label[start]}-{periods_label[end]}" if start!=end else periods_label[start],
+                "Lot Size": lot_size,
+                "Total Cost": total_cost,
+                "Cost per Period": cost_per_period
+            })
+
+            for k in range(start,end+1):
+                current_inventory += lot_size if k==start else 0
+                current_inventory += scheduled_rec[k] - gross_req[k]
+
+            i = end+1
+
+        st.markdown("### All Iterations Tested (MCP)")
+        st.dataframe(pd.DataFrame(all_iterations), use_container_width=True)
+        st.markdown("### Optimal Combination per Step (MCP)")
+        st.dataframe(pd.DataFrame(optimal_combinations), use_container_width=True)
+
+        csv_buffer = BytesIO()
+        combined = pd.concat([pd.DataFrame(all_iterations), pd.DataFrame(optimal_combinations)],
+                             keys=["All Iterations","Optimal"])
+        combined.to_csv(csv_buffer)
+        st.download_button("Download MCP CSV", data=csv_buffer,
+                           file_name="mcp_final_multitab.csv", mime="text/csv")
+
+# ---------------- TAB 5: LUC Tab ----------------
+with tab5:
+    st.subheader("Least Unit Cost (LUC) Iteration")
+    uploaded_csv = st.file_uploader("Upload CSV (Period, GR, Scheduled_Receipts) for LUC", type=["csv"], key="luc_tab")
+    if uploaded_csv:
+        df_input = pd.read_csv(uploaded_csv)
+        periods = len(df_input)
+        periods_label = [f"P{i+1}" for i in range(periods)]
+        gross_req = df_input['GR'].tolist()
+        scheduled_rec = df_input['Scheduled_Receipts'].tolist()
+
+        all_iterations = []
+        optimal_combinations = []
+        i = 0
+        current_inventory = initial_inventory
+
+        while i < periods:
+            best_combo = None
+            combos_tried = []
+
+            for j in range(i, periods):
+                temp_inventory = current_inventory
+                nr_list = []
+                for k in range(i,j+1):
+                    nr = max(0, gross_req[k] + mrp_safety_stock - (temp_inventory + scheduled_rec[k]))
+                    nr_list.append(nr)
+                    temp_inventory += nr + scheduled_rec[k] - gross_req[k]
+
+                net_demand = sum(nr_list)
+                planned_receipt = [0]*(j-i+1)
+                planned_receipt[0] = net_demand
+
+                temp_inv2 = current_inventory
+                cumulative_holding = 0
+                for k, nr in zip(range(j-i+1), nr_list):
+                    temp_inv2 += planned_receipt[k] + scheduled_rec[i+k] - gross_req[i+k]
+                    cumulative_holding += max(temp_inv2,0)
+                    temp_inv2 -= gross_req[i+k]
+
+                total_cost = setup_cost + holding_cost * cumulative_holding
+                unit_cost = total_cost / max(net_demand,1)
+
+                combos_tried.append({
+                    "Period Combination": f"{periods_label[i]}-{periods_label[j]}" if i!=j else periods_label[i],
+                    "Net Requirement": net_demand,
+                    "Lot Size": net_demand,
+                    "Total Cost": total_cost,
+                    "Unit Cost": unit_cost
+                })
+
+                if best_combo is not None and unit_cost > best_combo[4]:
+                    break
+                else:
+                    best_combo = (i,j,net_demand,total_cost,unit_cost)
+
+            if best_combo is None:
+                best_combo = (i,i,nr_list[0], setup_cost + holding_cost*nr_list[0], setup_cost + holding_cost*nr_list[0])
+
+            all_iterations.extend(combos_tried)
+            start,end,lot_size,total_cost,unit_cost = best_combo
+            optimal_combinations.append({
+                "Period Combination": f"{periods_label[start]}-{periods_label[end]}" if start!=end else periods_label[start],
+                "Lot Size": lot_size,
+                "Total Cost": total_cost,
+                "Unit Cost": unit_cost
+            })
+
+            for k in range(start,end+1):
+                current_inventory += lot_size if k==start else 0
+                current_inventory += scheduled_rec[k] - gross_req[k]
+
+            i = end+1
+
+        st.markdown("### All Iterations Tested (LUC)")
+        df_all = pd.DataFrame(all_iterations)
+        st.dataframe(df_all, use_container_width=True)
+        st.markdown("### Optimal Combination per Step (LUC)")
+        df_optimal = pd.DataFrame(optimal_combinations)
+        st.dataframe(df_optimal, use_container_width=True)
+
+        csv_buffer = BytesIO()
+        combined = pd.concat([pd.DataFrame(all_iterations), pd.DataFrame(optimal_combinations)],
+                             keys=["All Iterations","Optimal"])
+        combined.to_csv(csv_buffer)
+        st.download_button("Download LUC CSV", data=csv_buffer,
+                           file_name="luc_final_multitab.csv", mime="text/csv")
