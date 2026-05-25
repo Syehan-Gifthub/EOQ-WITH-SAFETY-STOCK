@@ -152,7 +152,7 @@ st.markdown("""
         font-weight: 600 !important;
     }
 
-    /* 7. Box Panduan Upload Excel Premium (BARU) */
+    /* 7. Box Panduan Upload Excel Premium */
     .upload-box {
         background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
         border: 1px solid #cbd5e1;
@@ -181,17 +181,16 @@ st.markdown("Aplikasi analisis strategi produksi komprehensif dengan pendekatan 
 st.markdown("---")
 
 # ==============================================================================
-# INTEGRASI TEMPLATE & KOTAK UPLOAD EXCEL OTOMATIS (BARU)
+# STRUKTUR MANAJEMEN STATE & INTEGRASI EXCEL YANG SUDAH DIPERBAIKI (ANTI-RESET)
 # ==============================================================================
 num_periods = 12
 default_demand = [1200, 1300, 1500, 1700, 1800, 1600, 1400, 1300, 1100, 1400, 1600, 1900]
 
-# Inisialisasi basis data demand ke dalam Session State agar tersinkronisasi lintas komponen
-if "df_demand_state" not in st.session_state:
-    st.session_state.df_demand_state = pd.DataFrame({
-        "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
-        "Demand": default_demand
-    })
+# Mencegah state terhapus saat interaksi widget lain berlangsung
+if "base_demand" not in st.session_state:
+    st.session_state.base_demand = default_demand.copy()
+if "editor_trigger" not in st.session_state:
+    st.session_state.editor_trigger = 0
 
 # Desain Banner Instruksi Upload yang Menarik & Informatif
 st.markdown("""
@@ -217,16 +216,21 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Generate File Excel Template secara Real-Time dalam Memory (Buffer)
+template_df = pd.DataFrame({
+    "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
+    "Demand": st.session_state.base_demand
+})
+
 template_io = io.BytesIO()
 with pd.ExcelWriter(template_io, engine='openpyxl') as writer:
-    st.session_state.df_demand_state.to_excel(writer, index=False, sheet_name='Demand_Template')
+    template_df.to_excel(writer, index=False, sheet_name='Demand_Template')
 template_io.seek(0)
 
 # Layout Interaktif Tombol Unduh & Unggah Excel
 col_dl, col_up = st.columns([1, 2])
 
 with col_dl:
-    st.write("") # Spacer keselarasan vertikal
+    st.write("") 
     st.write("") 
     st.download_button(
         label="📥 Unduh Template Excel Resmi",
@@ -239,23 +243,20 @@ with col_dl:
 with col_up:
     uploaded_file = st.file_uploader("Seret atau pilih file Excel Anda di sini:", type=["xlsx", "xls"], label_visibility="collapsed")
 
-# Logika Pemrosesan Otomatis jika User mengupload file Excel
+# Logika Pemrosesan Excel dengan trigger pembaruan state dinamis
 if uploaded_file is not None:
     try:
         excel_data = pd.read_excel(uploaded_file)
-        # Validasi struktur kepala tabel agar sesuai prasyarat mesin hitung
         if "Periode" in excel_data.columns and "Demand" in excel_data.columns:
-            # Ambil 12 periode teratas & konversi nilai ke tipe numerik integer beralur aman
             parsed_df = excel_data[["Periode", "Demand"]].head(num_periods).copy()
-            parsed_df["Demand"] = pd.to_numeric(parsed_df["Demand"], errors='coerce').fillna(0).astype(int)
+            parsed_demand = pd.to_numeric(parsed_df["Demand"], errors='coerce').fillna(0).astype(int).tolist()
             
-            # Perbarui state global aplikasi
-            st.session_state.df_demand_state = parsed_df
-            
-            # Hancurkan session state internal widget editor lama agar dipaksa memuat data baru dari Excel
-            if "demand_editor_key" in st.session_state:
-                del st.session_state["demand_editor_key"]
+            # Jika baris kurang dari 12, isi sisanya dengan angka 0
+            if len(parsed_demand) < num_periods:
+                parsed_demand += [0] * (num_periods - len(parsed_demand))
                 
+            st.session_state.base_demand = parsed_demand[:num_periods]
+            st.session_state.editor_trigger += 1  # Mengubah key data_editor agar dipaksa render ulang
             st.success("✅ File Excel berhasil diverifikasi! Seluruh data tabel utama dan sidebar otomatis diselaraskan.")
         else:
             st.error("❌ Format Kepala Tabel Salah! Pastikan kolom berlabel persis 'Periode' dan 'Demand'.")
@@ -269,13 +270,18 @@ st.markdown("---")
 # ==============================================================================
 st.sidebar.header("🛠️ Parameter Operasional")
 
-# Input Demand Base via UI Dataframe (Sekarang Otomatis ter-update jika mengunggah Excel)
-st.sidebar.subheader("Permintaan (Demand) per Periode")
+# Sinkronisasi dua arah yang aman antara unggahan Excel dan pengetikan manual di sidebar
+sidebar_input_df = pd.DataFrame({
+    "Periode": [f"Bulan {i+1}" for i in range(num_periods)],
+    "Demand": st.session_state.base_demand
+})
+
 demand_df = st.sidebar.data_editor(
-    st.session_state.df_demand_state,
+    sidebar_input_df,
     hide_index=True,
-    key="demand_editor_key"
+    key=f"demand_editor_{st.session_state.editor_trigger}"
 )
+# Jadikan variabel base_demand sebagai acuan murni komputasi
 base_demand = demand_df["Demand"].tolist()
 
 # Kapasitas & Tenaga Kerja
@@ -318,28 +324,33 @@ if not np.isclose(p_normal + p_optimistic + p_pessimistic, 1.0):
 selected_scenario = st.selectbox("Pilih Skenario Tampilan Utama Dashboard:", ["Normal", "Optimis", "Pesimis"])
 
 # ==============================================================================
-# 3. LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT
+# 3. PERBAIKAN TOTAL LOGIKA MESIN PERHITUNGAN STRATEGI AGREGAT
 # ==============================================================================
-def calculate_aggregate_planning(strategy, demand_list):
+def calculate_aggregate_planning(strategy, base_demand_list, demand_list):
     inv_prev = init_inv
     wf_prev = init_workforce
     
     records = []
     
+    # Perbaikan Logika Kapasitas Level: Mempertimbangkan stok awal & target safety stock akhir horizontal
     if strategy == "Level":
-        total_net_demand = sum([d + safety_stock for d in demand_list])
-        avg_production_needed = total_net_demand / num_periods
+        total_demand = sum(demand_list)
+        total_production_needed = max(0, total_demand + safety_stock - init_inv)
+        avg_production_needed = total_production_needed / num_periods
         constant_wf = int(np.ceil(avg_production_needed / worker_cap))
     else:
         constant_wf = init_workforce
 
     for t in range(num_periods):
+        b_d = base_demand_list[t]
         d_t = demand_list[t]
         net_demand = d_t + safety_stock
         
-        # 1. Workforce & Regular Time Production Planning Based on Strategy
+        # 1. Perbaikan Alokasi Tenaga Kerja & Kapasitas Reguler
         if strategy == "Chase":
-            wf_needed = int(np.ceil(net_demand / worker_cap))
+            # Perbaikan Logika Chase: Tenaga kerja direkrut berdasarkan kekurangan bersih bulan berjalan agar stok tidak menumpuk tanpa arah
+            prod_needed = max(0, d_t + safety_stock - inv_prev)
+            wf_needed = int(np.ceil(prod_needed / worker_cap))
             hiring = max(0, wf_needed - wf_prev)
             firing = max(0, wf_prev - wf_needed)
             wf_current = wf_needed
@@ -355,7 +366,7 @@ def calculate_aggregate_planning(strategy, demand_list):
             firing = 0
             rt_prod = wf_current * worker_cap
 
-        # 2. Perhitungan Overtime & Subcontracting dengan Kebijakan Minimum
+        # 2. Perhitungan Overtime & Subcontracting dengan Kebijakan Defisit
         deficit = max(0, net_demand - rt_prod - inv_prev)
         
         ot_prod = 0
@@ -373,16 +384,16 @@ def calculate_aggregate_planning(strategy, demand_list):
         elif strategy in ["Chase", "Level"] and deficit > 0:
             pass
 
-        # 3. Logika Inventori & Stockout Balance Sheet
+        # 3. Perbaikan Logika Balance Sheet: Inventory vs Stockout yang Akurat
+        # Stok akhir adalah sisa pasokan setelah dikurangi demand riil, bukan demand + safety stock!
         total_supply = inv_prev + rt_prod + ot_prod + sub_prod
-        balance = total_supply - net_demand
         
-        if balance >= 0:
-            inv_end = balance
+        if total_supply >= d_t:
+            inv_end = total_supply - d_t
             stockout = 0
         else:
             inv_end = 0
-            stockout = abs(balance)
+            stockout = d_t - total_supply
             
         # 4. Kalkulasi Struktur Biaya Detail per Periode
         cost_mat = (rt_prod + ot_prod) * c_material 
@@ -398,7 +409,8 @@ def calculate_aggregate_planning(strategy, demand_list):
 
         records.append({
             "Periode": f"Bulan {t+1}",
-            "Demand": d_t,
+            "Base Demand": b_d,        # Kolom baru: Membaca input murni Anda agar terlihat di master table
+            "Demand": d_t,             # Representasi demand skenario aktif
             "Net Demand": net_demand,
             "Workforce": wf_current,
             "Hiring": hiring,
@@ -438,7 +450,7 @@ results = {}
 for strat in ["Chase", "Level", "Mixed"]:
     results[strat] = {}
     for scen, d_list in demand_scenarios.items():
-        results[strat][scen] = calculate_aggregate_planning(strat, d_list)
+        results[strat][scen] = calculate_aggregate_planning(strat, base_demand, d_list)
 
 # ==============================================================================
 # 4. EVALUASI METRIK KPI UTAMA VIA EXPECTED VALUE
@@ -455,12 +467,13 @@ for strat in ["Chase", "Level", "Mixed"]:
     total_demand = df_active["Demand"].sum()
     total_shortage = df_active["Stockout"].sum()
     
-    service_level = max(0.0, ((total_demand - total_shortage) / total_demand) * 100)
+    service_level = max(0.0, ((total_demand - total_shortage) / total_demand) * 100) if total_demand > 0 else 100
     
     actual_production = df_active["RT Production"].sum() + df_active["OT Production"].sum()
     max_capacity = (df_active["Workforce"] * worker_cap).sum() + (max_ot_cap * num_periods)
     capacity_util = (actual_production / max_capacity) * 100 if max_capacity > 0 else 0
-    wf_util = (df_active["RT Production"].sum() / (df_active["Workforce"] * worker_cap).sum()) * 100
+    wf_total_cap = (df_active["Workforce"] * worker_cap).sum()
+    wf_util = (df_active["RT Production"].sum() / wf_total_cap) * 100 if wf_total_cap > 0 else 0
     
     summary_metrics.append({
         "Strategi": strat,
@@ -486,7 +499,6 @@ tab1, tab2, tab3 = st.tabs([
     "🎲 Analisis Risiko Skenario (Robust Planning)"
 ])
 
-# Fungsi helper premium untuk grafik Plotly (Background Transparan & Grid Halus & Teks Gelap Pekat)
 def apply_forced_light_theme(fig):
     fig.update_layout(
         template="plotly_white",
@@ -560,7 +572,8 @@ with tab2:
     df_selected = results[selected_strategy][selected_scenario]
     
     st.subheader(f"📋 Master Table Aggregate Production Planning: {selected_strategy} ({selected_scenario})")
-    master_display = df_selected[["Periode", "Demand", "Net Demand", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]]
+    # Penambahan kolom "Base Demand" agar user tahu persis data dasar yang diinput vs penyesuaian skenario demand
+    master_display = df_selected[["Periode", "Base Demand", "Demand", "Net Demand", "RT Production", "OT Production", "Subcontracting", "Total Supply", "Inventory", "Stockout"]]
     st.dataframe(master_display.style.format(precision=0), use_container_width=True)
     
     if selected_strategy == "Chase":
@@ -570,7 +583,7 @@ with tab2:
     elif selected_strategy == "Level":
         st.subheader("📦 Inventory Buffer & Capacity Efficiency Sheet (Level Focus)")
         df_level_spec = df_selected[["Periode", "Inventory", "Stockout", "RT Production"]].copy()
-        df_level_spec["Capacity Efficiency (%)"] = (df_level_spec["RT Production"] / (df_selected["Workforce"] * worker_cap)) * 100
+        df_level_spec["Capacity Efficiency (%)"] = np.where((df_selected["Workforce"] * worker_cap) > 0, (df_level_spec["RT Production"] / (df_selected["Workforce"] * worker_cap)) * 100, 0)
         st.dataframe(df_level_spec.style.format(precision=1), use_container_width=True)
         
     elif selected_strategy == "Mixed":
@@ -598,7 +611,7 @@ with tab2:
     v1, v2 = st.columns(2)
     with v1:
         fig_dp = go.Figure()
-        fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Real", line=dict(color='#ef4444', width=2, dash='dash')))
+        fig_dp.add_trace(go.Scatter(x=df_selected["Periode"], y=df_selected["Demand"], name="Demand Real Skenario", line=dict(color='#ef4444', width=2, dash='dash')))
         fig_dp.add_trace(go.Bar(x=df_selected["Periode"], y=df_selected["RT Production"] + df_selected["OT Production"] + df_selected["Subcontracting"], name="Total Produksi", marker_color='#3b82f6'))
         fig_dp.update_layout(title="Perbandingan Tren Permintaan vs Realisasi Pasokan (12 Bulan)", barmode='group')
         fig_dp = apply_forced_light_theme(fig_dp)
